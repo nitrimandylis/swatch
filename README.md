@@ -51,7 +51,10 @@ fastfetch + btop + cava in Ghostty. Dock auto-hidden.*
 - **yabai coupling:** `external_bar all:37:0` reserves the strip; window
   signals trigger `space_windows_change` to refresh the space icons.
 - **Claude widget:** `plugins/claude.sh` runs `ccusage` via `bun` (avoids
-  nvm's versioned node) for today's cost. macOS menu bar set to auto-hide.
+  nvm's versioned node) for today's cost, plus session limit % and reset
+  countdown from Anthropic's OAuth usage endpoint (token from Keychain
+  `Claude Code-credentials`) — ccusage's guessed 5-hour blocks don't match
+  the real window. macOS menu bar set to auto-hide.
 - **PATH:** `colors.sh` prepends Homebrew to PATH so the brew-service launchd
   env can find `yabai`/`sketchybar`.
 
