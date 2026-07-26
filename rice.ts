@@ -9,7 +9,6 @@ import { homedir } from "node:os";
 import zedTpl from "./templates/zed.json" with { type: "text" };
 import glowTpl from "./templates/glow.json" with { type: "text" };
 import vscodeTpl from "./templates/vscode.json" with { type: "text" };
-import vicinaeTpl from "./templates/vicinae.toml" with { type: "text" };
 import yaziTpl from "./templates/yazi.toml" with { type: "text" };
 import lazygitTpl from "./templates/lazygit.yml" with { type: "text" };
 import zenCssTpl from "./templates/zen-userChrome.css" with { type: "text" };
@@ -510,15 +509,6 @@ export const SURFACES: Surface[] = [
     },
   },
   {
-    name: "vicinae",
-    apply(t) {
-      const share = join(homedir(), ".local", "share", "vicinae");
-      if (!existsSync(share)) return null;
-      put(join(share, "themes", `${t.slug}.toml`), render(vicinaeTpl, t));
-      return "vicinae";
-    },
-  },
-  {
     name: "cava",
     apply(t) {
       const f = join(CONFIG, "cava", "config");
@@ -699,7 +689,7 @@ deep    = "${roles.deep}"
 on_fill = "${variant === "dark" ? roles.base : roles.text}"
 
 [extras]
-# orange = "#..."   # only if a surface asks for it (vicinae does)
+# orange = "#..."   # named colours a template can reference as x.<name>
 
 # Seeded from reference hues pulled toward the image. Tune by eye.
 [ansi]

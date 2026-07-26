@@ -9,11 +9,11 @@
 
 <div align="center">
 
-### `ONE PALETTE // THIRTEEN SURFACES // ONE COMMAND`
+### `ONE PALETTE // TWELVE SURFACES // ONE COMMAND`
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
-![surfaces](https://img.shields.io/badge/surfaces-13-e85a9c?style=flat-square&labelColor=111111)
+![surfaces](https://img.shields.io/badge/surfaces-12-e85a9c?style=flat-square&labelColor=111111)
 ![themes](https://img.shields.io/badge/themes-3-e85a9c?style=flat-square&labelColor=111111)
 ![runtime](https://img.shields.io/badge/runtime-bun-4e749e?style=flat-square&labelColor=111111)
 ![deps](https://img.shields.io/badge/runtime_deps-0-4e749e?style=flat-square&labelColor=111111)
@@ -48,12 +48,15 @@ Batman Jazz
   ✓ ghostty (supacode reads this config; p10k + fastfetch inherit its ANSI)
   ✓ btop
   ✓ borders
-  ✓ wallpaper (wallpaper.jpg)
+  ✓ wallpaper (wallpaper.jpg, 5 spaces)
   ✓ sketchybar
   ✓ yazi
+  ✓ glow
   ✓ zed
   ✓ vscode (restart VS Code to pick it up)
-  · vicinae not set up here, skipped
+  ✓ cava
+  ✓ lazygit
+  ✓ zen (restart Zen to pick it up)
 ```
 
 ## 🎨 The surfaces
@@ -63,7 +66,7 @@ app supports, not on preference.
 
 | | mechanism | what it actually does |
 |---|---|---|
-| 01 | **pointer flip** | rice writes `themes/<slug>` next to the config and swaps one line to name it — ghostty, btop, glow, zed, vscode, vicinae, yazi |
+| 01 | **pointer flip** | rice writes `themes/<slug>` next to the config and swaps one line to name it — ghostty, btop, glow, zed, vscode, yazi |
 | 02 | **marker injection** | app has no theme-file support, so rice owns the block between `rice:start` and `rice:end` and leaves the rest alone — borders, cava, lazygit, zen |
 | 03 | **osascript per Space** | the wallpaper — System Events' "desktop" means *display*, so rice walks the Spaces with yabai and sets each one |
 | 04 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
@@ -145,7 +148,7 @@ flowchart LR
     R --> T[templates/]
     T --> F[theme files]
     R --> M[marker blocks]
-    F --> A[13 surfaces]
+    F --> A[12 surfaces]
     M --> A
     R --> D[themes/slug/README.md]
 ```

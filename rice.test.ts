@@ -148,7 +148,7 @@ test("every template renders to a parseable document", () => {
   const t = loadTheme("batman-jazz");
   for (const f of ["zed.json", "glow.json", "vscode.json"])
     expect(() => JSON.parse(render(readFileSync(`${RICE_HOME}/templates/${f}`, "utf8"), t))).not.toThrow();
-  for (const f of ["vicinae.toml", "yazi.toml"])
+  for (const f of ["yazi.toml"])
     expect(() => Bun.TOML.parse(render(readFileSync(`${RICE_HOME}/templates/${f}`, "utf8"), t))).not.toThrow();
 });
 
