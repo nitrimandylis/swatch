@@ -1,2 +1,11 @@
 .DS_Store
 node_modules/
+
+# My screenshot rig: the Supacode pane layout and the capture checklist. Both
+# drive tools that aren't installable (juke, jazz), so they're local-only.
+supacode/
+SHOWCASE.md
+
+# Themes are personal data and live in their own repo. Anchored, so the test
+# fixtures under test/themes/ still get tracked.
+/themes/

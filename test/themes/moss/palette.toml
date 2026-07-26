@@ -1,0 +1,30 @@
+# A fixture theme, not a real one. It exists so the tests can read a theme off
+# disk without depending on anybody's personal collection.
+
+[meta]
+name = "Moss"
+variant = "dark"
+description = "Damp green under a grey sky, for tests only."
+
+[roles]
+base    = "#10140f"
+surface = "#1a2018"
+overlay = "#252d22"
+text    = "#dde5d8"
+muted   = "#8a9685"
+accent  = "#7fd06a"
+deep    = "#2f5a28"
+on_fill = "#10140f"
+
+[extras]
+orange = "#cf8a5a"
+
+[ansi]
+black   = ["#252d22", "#4a5544"]
+red     = ["#a2503a", "#c86b55"]
+green   = ["#7d9b6f", "#94b586"]
+yellow  = ["#c9a76a", "#dcc088"]
+blue    = ["#4e749e", "#678dae"]
+magenta = ["#8f6a9e", "#a887b8"]
+cyan    = ["#4a8f8a", "#67aaa5"]
+white   = ["#c5d0c0", "#e8eee5"]

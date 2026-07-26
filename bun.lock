@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "rice",
+      "name": "swatch",
       "devDependencies": {
         "@types/bun": "^1.3.14",
       },

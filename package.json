@@ -1,13 +1,14 @@
 {
-  "name": "rice",
+  "name": "swatch",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
   "bin": {
-    "rice": "./rice.ts"
+    "swatch": "./swatch.ts"
   },
   "scripts": {
-    "compile": "bun build --compile rice.ts --define process.env.RICE_BAKED_HOME=\"\\\"$PWD\\\"\" --outfile ~/.bun/bin/rice && mkdir -p $(brew --prefix)/share/man/man1 && cp man/rice.1 $(brew --prefix)/share/man/man1/"
+    "test": "bun test",
+    "compile": "bun build --compile swatch.ts --outfile ~/.bun/bin/swatch && mkdir -p $(brew --prefix)/share/man/man1 && cp man/swatch.1 $(brew --prefix)/share/man/man1/"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14"

@@ -1,0 +1,71 @@
+.TH SWATCH 1 "2026-07-26" "swatch 0.1.0" "User Commands"
+.SH NAME
+swatch \- switch the whole desktop to a theme
+.SH SYNOPSIS
+.B swatch
+[\fIcommand\fR] [\fIargs\fR]
+.SH DESCRIPTION
+Applies a palette to every themed surface on the machine: terminal, editors,
+status bar, file manager, browser and wallpaper. A theme is a directory holding
+a \fIpalette.toml\fR and a wallpaper, kept under
+\fI~/.config/swatch/themes/\fR.
+.PP
+Swatch writes theme files and one pointer line per surface; it never rewrites a
+whole config. Where an app has no theme-file mechanism, swatch replaces only the
+block between
+.B "# swatch:start"
+and
+.B "# swatch:end"
+markers. A pointer edit that does not match exactly one line is an error, not a
+guess.
+.PP
+Swatch refuses to apply a palette containing the string TODO.
+.SH COMMANDS
+.TP
+.B list
+Show available themes, one per line. Unfinished scaffolds are listed as such.
+.TP
+.B use \fItheme\fR
+Apply a theme to every surface. Surfaces whose app is not set up on this
+machine are skipped, not failed.
+.TP
+.B status [\fItheme\fR]
+Run
+.B use
+with the writes turned off and report which files would change. Defaults to the
+first theme.
+.TP
+.B new \fIname\fR \fIimage\fR
+Scaffold a theme directory from a wallpaper: copies the image, samples its
+luminance range for the structural roles, seeds the ANSI 16, and marks the
+accent TODO. Extraction recovers structure, never identity.
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Show help.
+.SH ENVIRONMENT
+.TP
+.B SWATCH_THEMES
+Directory holding your themes, one subdirectory each. Defaults to
+\fI~/.config/swatch/themes\fR. Point it at a checkout to keep your themes in a
+repository of their own.
+.SH NOTES
+VS Code and Zen only pick up a new theme after the app restarts. Everything
+else reloads on its own: sketchybar and borders are reconfigured in place, and
+the terminal tools pick up their theme file the next time they run.
+.PP
+Each macOS Space keeps its own wallpaper, and System Events has no per-Space
+API: its "desktop" is a display. Swatch therefore walks the Spaces with
+.BR yabai (1),
+setting each and restoring focus afterwards. Without yabai it sets the focused
+Space only and says so.
+.PP
+Dynamic wallpapers are HEIC files carrying \fIapple_desktop:solar\fR or
+\fI:h24\fR, often named \fI.jpg\fR.
+.B swatch new
+takes the extension from
+.BR sips (1)
+and warns that one palette cannot follow a wallpaper that changes all day.
+.SH SEE ALSO
+.BR dt (1),
+.BR sips (1)
