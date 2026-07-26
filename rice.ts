@@ -203,6 +203,19 @@ export const SURFACES: Surface[] = [
       return "borders (reload: brew services restart borders)";
     },
   },
+  {
+    name: "wallpaper",
+    apply(t) {
+      const file = readdirSync(t.dir).find((f) => f.startsWith("wallpaper."));
+      if (!file) return null;
+      // ponytail: JSON.stringify quotes the path well enough for AppleScript;
+      // theme dirs are slugs, so no quotes or backslashes to escape.
+      const script = `tell application "System Events" to set picture of every desktop to ${JSON.stringify(join(t.dir, file))}`;
+      const r = Bun.spawnSync(["osascript", "-e", script]);
+      if (r.exitCode !== 0) throw new Error(`wallpaper: ${r.stderr.toString().trim()}`);
+      return `wallpaper (${file})`;
+    },
+  },
 ];
 
 const HELP = `rice — switch the whole desktop to a theme
