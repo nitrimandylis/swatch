@@ -874,20 +874,26 @@ function sampleRoles(image: string) {
  * picture twice is something you should hear about, not something that quietly
  * leaves you with x.png and x-2.png and no idea which is which.
  */
-function addToPool(dir: string, images: string[]): string[] {
+export function addToPool(dir: string, images: string[]): string[] {
   for (const img of images) if (!existsSync(img)) throw new Error(`no such image: ${img}`);
   const wp = join(dir, "wallpapers");
-  mkdirSync(wp, { recursive: true });
-  return images.map((img) => {
-    // The extension comes from sips, not the path: macOS ships dynamic
-    // wallpapers as HEIC files named .jpg, and copying one under the wrong
-    // extension stops macOS treating it as an image it understands.
-    const name = `${basename(img).replace(/\.[^.]+$/, "")}.${imageFormat(img)}`;
-    const dest = join(wp, name);
-    if (existsSync(dest)) throw new Error(`${name} is already in this theme`);
-    writeFileSync(dest, readFileSync(img));
-    return name;
+  // The extension comes from sips, not the path: macOS ships dynamic wallpapers
+  // as HEIC files named .jpg, and copying one under the wrong extension stops
+  // macOS treating it as an image it understands.
+  const names = images.map((img) => `${basename(img).replace(/\.[^.]+$/, "")}.${imageFormat(img)}`);
+
+  // Check the whole batch before writing any of it. Half a theme is worse than
+  // none: `swatch new` would then refuse to retry because the directory exists,
+  // and you would have to know to delete it. This also catches the same file
+  // listed twice, which one glob plus one explicit path does easily.
+  names.forEach((name, i) => {
+    if (existsSync(join(wp, name))) throw new Error(`${name} is already in this theme`);
+    if (names.indexOf(name) !== i) throw new Error(`${name} was given twice`);
   });
+
+  mkdirSync(wp, { recursive: true });
+  names.forEach((name, i) => writeFileSync(join(wp, name), readFileSync(images[i]!)));
+  return names;
 }
 
 /** ponytail: one flag in the whole CLI, so this is the arg parser. */

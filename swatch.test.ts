@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -331,4 +331,20 @@ test("themeReadme galleries the whole pool, with spaces escaped", () => {
   // The old single-image link is gone: nord's wallpaper was a .png and this
   // said .jpg for months without anyone noticing.
   expect(md).not.toContain("![wallpaper](wallpaper.jpg)");
+});
+
+test("addToPool writes nothing when any name in the batch collides", () => {
+  const dir = join(tmpdir(), "swatch-batch");
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  const png = join(dir, "a.png");
+  writeFileSync(png, Buffer.from(PNG_1PX, "base64"));
+
+  // Same file twice: one glob plus one explicit path does this by accident, and
+  // a half-written pool would leave `swatch new` unable to retry.
+  expect(() => addToPool(dir, [png, png])).toThrow(/given twice/);
+  expect(pool(dir)).toEqual([]);
+
+  expect(addToPool(dir, [png])).toEqual(["a.png"]);
+  expect(() => addToPool(dir, [png])).toThrow(/already in this theme/);
 });
