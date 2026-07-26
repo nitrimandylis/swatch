@@ -183,6 +183,12 @@ flowchart LR
 - **Zen's live profile** is the one named by `[InstallXXX] Default=` in
   `profiles.ini`. The `Default=1` flag on a `[ProfileN]` section points at an
   empty profile here.
+- **Set Zen's variables, don't paint its elements.** `#zen-main-app-wrapper`
+  draws the outer chrome from `--zen-themed-toolbar-bg-transparent`, which
+  resolves to literally `transparent` in some modes — so styling only
+  `#navigator-toolbox` and `.browserContainer` leaves the workspace gradient
+  showing down the sides of the window. Setting the variable instead means every
+  colour Zen derives with `color-mix()` follows along.
 - **A "desktop" in System Events is a display, not a Space.** One monitor with
   five Spaces reports `count of desktops` = 1, so `set picture of every desktop`
   changes exactly one wallpaper. Spaces each keep their own, in
