@@ -45,7 +45,7 @@ Batman Jazz
   ✓ ghostty (supacode reads this config; p10k + fastfetch inherit its ANSI)
   ✓ btop
   ✓ borders
-  ✓ wallpaper (wallpaper.jpg, 5 spaces)
+  ✓ wallpaper (dusk-late.jpg, 5 spaces)
   ✓ sketchybar
   ✓ yazi
   ✓ glow
@@ -73,7 +73,7 @@ app supports, not on preference.
 | 01 | `swatch list` | themes on disk, unfinished scaffolds marked as such |
 | 02 | `swatch use <theme>` | applies everything, skips apps that aren't installed, regenerates the theme's README |
 | 03 | `swatch status` | the same code path with writes disabled, tells you which files have drifted |
-| 04 | `swatch new <name> <img>` | samples a wallpaper into a palette scaffold and marks the accent TODO |
+| 04 | `swatch new <name> <img>...` | samples the first wallpaper into a palette scaffold and marks the accent TODO |
 
 Swatch refuses to apply any palette containing the string `TODO`.
 
@@ -101,14 +101,40 @@ git clone git@github.com:you/my-themes.git ~/.config/swatch/themes
 export SWATCH_THEMES=~/code/my-themes
 ```
 
-A theme is a directory holding `palette.toml` and a wallpaper. Building one
-starts from the image:
+A theme is a directory holding `palette.toml` and a `wallpapers/` pool. Building
+one starts from the image:
 
 ```bash
 swatch new "Copper Dusk" ~/Pictures/dusk.jpg
 # edit copper-dusk/palette.toml, the accent is yours to pick
 swatch use copper-dusk
 ```
+
+One palette, many pictures: a theme is a set of colors, and a wallpaper is a
+mood inside it. Add more whenever you find them, by path or piped from anything
+that prints paths.
+
+```bash
+swatch add copper-dusk ~/Pictures/dusk-*.jpg
+fzf -m --preview 'chafa {}' | swatch add copper-dusk -   # swatch never learns where your wallpapers live
+```
+
+`swatch use copper-dusk` then opens an fzf menu with chafa previews, unless the
+theme holds exactly one picture. Escape changes nothing at all: the menu runs
+before any config is written. Scripts skip it with `--pick`, which takes either
+a number from `swatch list copper-dusk` or a filename:
+
+```bash
+swatch list copper-dusk          #   1. dusk.jpg
+                                 #   2. dusk-late.jpg
+swatch use copper-dusk --pick 2
+swatch use copper-dusk --pick dusk-late.jpg   # survives the pool growing
+```
+
+With no terminal to draw on, no fzf installed, or `--pick` given, no menu opens:
+swatch keeps the wallpaper already on screen when it belongs to the theme, and
+otherwise takes the first. So a re-apply never yanks you off the picture you
+chose, and nothing needs a state file to remember it.
 
 ## 🧪 Extraction, and what it can't do
 
@@ -131,7 +157,7 @@ leaving that field blank.
 
 ```mermaid
 flowchart LR
-    W[wallpaper] -->|swatch new| P[palette.toml]
+    W[wallpapers/] -->|swatch new| P[palette.toml]
     P --> R[swatch use]
     R --> T[templates/]
     T --> F[theme files]

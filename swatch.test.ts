@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -315,4 +315,20 @@ test("resolvePick takes an index or a name, and refuses anything else", () => {
   // "f" is ambiguous. Guessing here would apply the wrong wallpaper silently.
   expect(() => resolvePick("f", files)).toThrow(/matches 2/);
   expect(() => resolvePick("1", [])).toThrow(/no wallpapers/);
+});
+
+test("themeReadme galleries the whole pool, with spaces escaped", () => {
+  const dir = join(tmpdir(), "swatch-readme");
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(join(dir, "wallpapers"), { recursive: true });
+  for (const f of ["Desktop Wallpaper 1.jpg", "aurora.png"])
+    writeFileSync(join(dir, "wallpapers", f), "x");
+
+  const md = themeReadme(parseTheme("test", dir, GOOD));
+  expect(md).toContain("1. `Desktop Wallpaper 1.jpg`");
+  expect(md).toContain("![](wallpapers/Desktop%20Wallpaper%201.jpg)");
+  expect(md).toContain("2. `aurora.png`");
+  // The old single-image link is gone: nord's wallpaper was a .png and this
+  // said .jpg for months without anyone noticing.
+  expect(md).not.toContain("![wallpaper](wallpaper.jpg)");
 });

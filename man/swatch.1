@@ -7,7 +7,7 @@ swatch \- switch the whole desktop to a theme
 .SH DESCRIPTION
 Applies a palette to every themed surface on the machine: terminal, editors,
 status bar, file manager, browser and wallpaper. A theme is a directory holding
-a \fIpalette.toml\fR and a wallpaper, kept under
+a \fIpalette.toml\fR and a \fIwallpapers/\fR pool, kept under
 \fI~/.config/swatch/themes/\fR.
 .PP
 Swatch writes theme files and one pointer line per surface; it never rewrites a
@@ -22,12 +22,26 @@ guess.
 Swatch refuses to apply a palette containing the string TODO.
 .SH COMMANDS
 .TP
-.B list
-Show available themes, one per line. Unfinished scaffolds are listed as such.
+.B list [\fItheme\fR]
+Show available themes, one per line, with the size of each wallpaper pool.
+Unfinished scaffolds are listed as such. Given a theme, show that theme's
+wallpapers numbered, which are the numbers
+.B \-\-pick
+takes.
 .TP
-.B use \fItheme\fR
+.B use \fItheme\fR [\fB\-\-pick\fR \fIn\fR|\fIname\fR]
 Apply a theme to every surface. Surfaces whose app is not set up on this
 machine are skipped, not failed.
+.IP
+A theme holding more than one wallpaper opens an
+.BR fzf (1)
+menu, previewed with
+.BR chafa (1)
+when it is installed, before any surface is written; escaping it changes
+nothing. With no terminal, no fzf, or
+.BR \-\-pick ,
+no menu opens: swatch keeps the wallpaper already on screen if it belongs to
+the theme, and otherwise takes the first.
 .TP
 .B status [\fItheme\fR]
 Run
@@ -35,10 +49,23 @@ Run
 with the writes turned off and report which files would change. Defaults to the
 first theme.
 .TP
-.B new \fIname\fR \fIimage\fR
-Scaffold a theme directory from a wallpaper: copies the image, samples its
-luminance range for the structural roles, seeds the ANSI 16, and marks the
-accent TODO. Extraction recovers structure, never identity.
+.B new \fIname\fR \fIimage\fR...
+Scaffold a theme directory: copies the images into
+.IR wallpapers/ ,
+samples the first one's luminance range for the structural roles, seeds the
+ANSI 16, and marks the accent TODO. Extraction recovers structure, never
+identity.
+.TP
+.B add \fItheme\fR \fIimage\fR...
+Copy more wallpapers into an existing theme, keeping their filenames. A name
+already in the pool is an error. Given
+.B \-
+instead of paths, read them from standard input one per line, so an
+interactive selection can be piped in:
+.IP
+.EX
+fzf \-m | swatch add nord \-
+.EE
 .SH OPTIONS
 .TP
 .BR \-h ", " \-\-help

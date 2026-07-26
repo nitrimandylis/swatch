@@ -3,8 +3,9 @@
 ## What it is
 
 A CLI that applies one palette across every themed surface on a macOS desktop.
-A theme is a directory: `palette.toml` plus a wallpaper. `swatch use <theme>`
-writes twelve surfaces from it.
+A theme is a directory: `palette.toml` plus a `wallpapers/` pool. `swatch use
+<theme>` writes twelve surfaces from it, and picks from the pool with fzf when
+there is more than one picture to choose between.
 
 The problem it solves is duplication. Before this, the hex `#e85a9c` appeared in
 fourteen config files, and changing it meant finding all fourteen. Now it
