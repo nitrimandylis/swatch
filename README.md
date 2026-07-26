@@ -47,7 +47,7 @@ nick@rice:~$ rice use batman-jazz
 Batman Jazz
   ✓ ghostty (supacode reads this config; p10k + fastfetch inherit its ANSI)
   ✓ btop
-  ✓ borders (reload: brew services restart borders)
+  ✓ borders
   ✓ wallpaper (wallpaper.jpg)
   ✓ sketchybar
   ✓ yazi
@@ -161,6 +161,10 @@ flowchart LR
 
 ### Notes worth keeping
 
+- **JankyBorders reloads live.** `bordersrc` is only read at launch, but running
+  `borders <options>` reconfigures an instance that is already up, so rice does
+  that instead of asking for `brew services restart borders`. Running it with no
+  instance would start one in the foreground and block, hence the `pgrep` guard.
 - **glow and lazygit don't read `~/.config`.** They use Go's
   `os.UserConfigDir`, which on macOS is `~/Library`. Both are symlinked back to
   `~/.config`, which is where rice writes.

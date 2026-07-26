@@ -47,8 +47,9 @@ Show help.
 .B RICE_HOME
 Path to the rice repository. Defaults to \fI~/cc/rice\fR.
 .SH NOTES
-VS Code and Zen only pick up a new theme after the app restarts. Borders needs
-.BR "brew services restart borders" .
+VS Code and Zen only pick up a new theme after the app restarts. Everything
+else reloads on its own: sketchybar and borders are reconfigured in place, and
+the terminal tools pick up their theme file the next time they run.
 .PP
 Each macOS Space keeps its own wallpaper, and System Events has no per-Space
 API: its "desktop" is a display. Rice therefore walks the Spaces with

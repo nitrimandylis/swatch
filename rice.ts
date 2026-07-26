@@ -381,12 +381,17 @@ export const SURFACES: Surface[] = [
     apply(t) {
       const rc = join(CONFIG, "borders", "bordersrc");
       if (!existsSync(rc)) return null;
-      const body = [
+      const opts = [
         `active_color=${argb(t.roles.accent)}`,
         `inactive_color=${argb(t.ansi.black[0])}`,
-      ].join("\n");
-      put(rc, inject(readFileSync(rc, "utf8"), body));
-      return "borders (reload: brew services restart borders)";
+      ];
+      put(rc, inject(readFileSync(rc, "utf8"), opts.join("\n")));
+      // bordersrc is only read at launch, so the file alone changes nothing
+      // until the service restarts. JankyBorders applies options to an instance
+      // that is already running, which is the live reload — but invoking it with
+      // none running starts one in the foreground and blocks, hence the pgrep.
+      if (Bun.spawnSync(["pgrep", "-x", "borders"]).exitCode === 0) run(["borders", ...opts]);
+      return "borders";
     },
   },
   {
