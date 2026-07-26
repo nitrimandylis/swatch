@@ -1,0 +1,31 @@
+.TH RICE 1 "2026-07-26" "rice 0.1.0" "User Commands"
+.SH NAME
+rice \- switch the whole desktop to a theme
+.SH SYNOPSIS
+.B rice
+[\fIcommand\fR] [\fIargs\fR]
+.SH DESCRIPTION
+Applies a palette to every themed surface on the machine: terminal, editors,
+status bar, file manager, browser and wallpaper. A theme is a directory under
+\fIthemes/\fR holding a \fIpalette.toml\fR and a wallpaper. Rice writes theme
+files and one pointer line per surface; it never rewrites a whole config.
+.PP
+Rice refuses to apply a palette containing the string TODO.
+.SH COMMANDS
+.TP
+.B list
+Show available themes, one per line, with display name and variant.
+.TP
+.B use \fItheme\fR
+Apply a theme to every surface.
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Show help.
+.SH ENVIRONMENT
+.TP
+.B RICE_HOME
+Path to the rice repository. Defaults to \fI~/cc/rice\fR.
+.SH SEE ALSO
+.BR dt (1),
+.BR ghostty (1)

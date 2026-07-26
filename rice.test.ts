@@ -1,0 +1,65 @@
+import { expect, test } from "bun:test";
+import { parseTheme, isHex, loadTheme, listThemes } from "./rice";
+
+const GOOD = `
+[meta]
+name = "Test"
+variant = "dark"
+description = "d"
+[roles]
+base = "#000000"
+surface = "#111111"
+overlay = "#222222"
+text = "#eeeeee"
+muted = "#888888"
+accent = "#ff00aa"
+deep = "#8f2a3a"
+on_fill = "#000000"
+[ansi]
+black = ["#20252f", "#5f7897"]
+red = ["#a23a4a", "#c85566"]
+green = ["#7d9b6f", "#94b586"]
+yellow = ["#c9a76a", "#dcc088"]
+blue = ["#4e749e", "#678dae"]
+magenta = ["#b06a8f", "#e85a9c"]
+cyan = ["#4a8f9e", "#67aab8"]
+white = ["#c5d3e0", "#e8eef5"]
+`;
+
+test("isHex", () => {
+  expect(isHex("#09090b")).toBe(true);
+  expect(isHex("09090b")).toBe(false);
+  expect(isHex("#09090")).toBe(false);
+  expect(isHex(undefined)).toBe(false);
+});
+
+test("parses a complete palette", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  expect(t.meta.name).toBe("Test");
+  expect(t.roles.accent).toBe("#ff00aa");
+  expect(t.ansi.magenta[1]).toBe("#e85a9c");
+  expect(t.render.opacity).toBe(0.92); // dark default
+});
+
+test("refuses a palette with TODO", () => {
+  expect(() => parseTheme("t", "/tmp", GOOD.replace("#ff00aa", "TODO"))).toThrow(/TODO/);
+});
+
+test("refuses a missing role", () => {
+  expect(() => parseTheme("t", "/tmp", GOOD.replace('on_fill = "#000000"', ""))).toThrow(/on_fill/);
+});
+
+test("refuses a bad ansi pair", () => {
+  expect(() => parseTheme("t", "/tmp", GOOD.replace('["#4a8f9e", "#67aab8"]', '"#4a8f9e"'))).toThrow(/cyan/);
+});
+
+test("refuses a bad variant", () => {
+  expect(() => parseTheme("t", "/tmp", GOOD.replace('variant = "dark"', 'variant = "neon"'))).toThrow(/variant/);
+});
+
+test("batman-jazz loads from disk", () => {
+  expect(listThemes()).toContain("batman-jazz");
+  const t = loadTheme("batman-jazz");
+  expect(t.meta.name).toBe("Batman Jazz");
+  expect(t.extras.orange).toBe("#cf8a5a");
+});
