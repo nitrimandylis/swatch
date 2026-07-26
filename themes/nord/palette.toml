@@ -1,0 +1,30 @@
+[meta]
+name = "Nord"
+variant = "dark"
+description = "The published Nord palette, arctic and low-contrast on purpose."
+
+[roles]
+base    = "#2e3440"
+surface = "#3b4252"
+overlay = "#434c5e"
+text    = "#d8dee9"
+muted   = "#4c566a"
+accent  = "#88c0d0"
+deep    = "#5e81ac"
+on_fill = "#2e3440"
+
+[extras]
+orange = "#d08770"
+
+[ansi]
+black   = ["#3b4252", "#4c566a"]
+red     = ["#bf616a", "#d08770"]
+green   = ["#a3be8c", "#b5cba1"]
+yellow  = ["#ebcb8b", "#f0d9a8"]
+blue    = ["#81a1c1", "#8fbcbb"]
+magenta = ["#b48ead", "#c9a8c4"]
+cyan    = ["#88c0d0", "#9fd0dd"]
+white   = ["#e5e9f0", "#eceff4"]
+
+[render]
+opacity = 0.95

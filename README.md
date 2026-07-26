@@ -14,6 +14,7 @@
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
 ![surfaces](https://img.shields.io/badge/surfaces-13-e85a9c?style=flat-square&labelColor=111111)
+![themes](https://img.shields.io/badge/themes-3-e85a9c?style=flat-square&labelColor=111111)
 ![runtime](https://img.shields.io/badge/runtime-bun-4e749e?style=flat-square&labelColor=111111)
 ![deps](https://img.shields.io/badge/runtime_deps-0-4e749e?style=flat-square&labelColor=111111)
 ![license](https://img.shields.io/badge/license-MIT-e85a9c?style=flat-square&labelColor=111111)
@@ -37,9 +38,9 @@ edit that matches zero lines or two lines is an error, not a guess. Dovetail
 (`dt`) still owns the configs themselves, so `dt undo` reverts anything rice got
 wrong.
 
-Batman Jazz is theme one. It is a near-black room, steel-blue midtones, and a
-neon-pink bat-signal — a color which, it turns out, is not actually in the
-wallpaper.
+Batman Jazz is theme one: a near-black room, steel-blue midtones, and a
+neon-pink bat-signal, a color which is not actually in the wallpaper. Firewatch
+and Nord followed, extracted from their own images.
 
 ```console
 nick@rice:~$ rice use batman-jazz
@@ -122,9 +123,17 @@ rice use copper-dusk
 
 Extraction recovers structure, never identity. It walks the image's luminance
 range for base, surface, overlay, muted and text, and takes the most saturated
-color in the lower half as `deep`. The accent — the one color anyone actually
-notices — is left as `TODO`, because Batman Jazz's pink sits 67 units away from
-anything in its own wallpaper.
+color in the lower half as `deep`. The accent is left as `TODO`, and the two
+themes built this way show why:
+
+- Against the Nord wallpaper it returns `#2e3440` for `base`, which is nord0 to
+  the byte, and lands within a few units on `text` and `deep`. Structure holds up.
+- Against the Firewatch wallpaper the accent anyone would name is the amber in
+  the tower window, `#fedb01` — 0.137% of the image, and gone entirely by the
+  time it is sampled at 96px.
+
+No amount of sampling recovers the second one, which is the whole argument for
+leaving that field blank.
 
 ## 🔩 Under the hood
 
