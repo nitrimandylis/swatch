@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme } from "./rice";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb } from "./rice";
 
 const GOOD = `
 [meta]
@@ -86,6 +86,26 @@ test("btop theme covers every key btop reads", () => {
   expect(b).toContain('theme[main_bg]="#000000"');
   expect(b).toContain('theme[used_end]="#ff00aa"'); // accent tops the ram gradient
   expect(b.match(/theme\[/g)).toHaveLength(42);
+});
+
+test("argb prefixes alpha", () => {
+  expect(argb("#e85a9c")).toBe("0xffe85a9c");
+  expect(argb("#e85a9c", "80")).toBe("0x80e85a9c");
+});
+
+test("inject replaces the marked block and keeps indentation", () => {
+  const rc = "options=(\n\t# rice:start\n\told=1\n\t# rice:end\n)\n";
+  const out = inject(rc, "a=1\nb=2");
+  expect(out).toBe("options=(\n\t# rice:start\n\ta=1\n\tb=2\n\t# rice:end\n)\n");
+});
+
+test("inject is idempotent", () => {
+  const rc = "# rice:start\nx\n# rice:end\n";
+  expect(inject(inject(rc, "a=1"), "a=1")).toBe(inject(rc, "a=1"));
+});
+
+test("inject refuses a file without markers", () => {
+  expect(() => inject("options=()\n", "a=1")).toThrow(/markers/);
 });
 
 test("batman-jazz loads from disk", () => {

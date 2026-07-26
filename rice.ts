@@ -94,7 +94,26 @@ export function replaceLine(text: string, re: RegExp, line: string): string {
   return text.replace(new RegExp(re.source, "m"), () => line);
 }
 
+/**
+ * Replace whatever sits between `<comment> rice:start` and `<comment> rice:end`.
+ * Body lines inherit the start marker's indentation, which YAML needs and the
+ * bash arrays look better for.
+ */
+export function inject(text: string, body: string, comment = "#"): string {
+  const START = `${comment} rice:start`;
+  const END = `${comment} rice:end`;
+  const i = text.indexOf(START);
+  const j = text.indexOf(END);
+  if (i === -1 || j === -1 || j < i) throw new Error(`missing "${START}" / "${END}" markers`);
+  const indent = text.slice(text.lastIndexOf("\n", i) + 1, i);
+  const lines = body.split("\n").map((l) => (l ? indent + l : l)).join("\n");
+  return `${text.slice(0, i)}${START}\n${lines}\n${indent}${text.slice(j)}`;
+}
+
 const bare = (hex: string) => hex.slice(1);
+
+/** 0xAARRGGBB — what borders and sketchybar want. */
+export const argb = (hex: string, alpha = "ff") => `0x${alpha}${bare(hex)}`;
 
 /** A ghostty theme file: everything except `theme` and `config-file` is allowed. */
 export function ghosttyTheme(t: Theme): string {
@@ -169,6 +188,19 @@ export const SURFACES: Surface[] = [
         replaceLine(readFileSync(cfg, "utf8"), /^color_theme = .*$/, `color_theme = "${t.slug}"`),
       );
       return "btop";
+    },
+  },
+  {
+    name: "borders",
+    apply(t) {
+      const rc = join(CONFIG, "borders", "bordersrc");
+      if (!existsSync(rc)) return null;
+      const body = [
+        `active_color=${argb(t.roles.accent)}`,
+        `inactive_color=${argb(t.ansi.black[0])}`,
+      ].join("\n");
+      writeFileSync(rc, inject(readFileSync(rc, "utf8"), body));
+      return "borders (reload: brew services restart borders)";
     },
   },
 ];
