@@ -1,6 +1,6 @@
-# Screenshot grid — Batman Jazz
+# Screenshot grid
 
-The terminal panes I want in the rice screenshot. Everything's themed to the
+The terminal panes worth capturing for any theme. Everything is themed from the
 palette. Start some music first so `cava` actually moves.
 
 | Pane | Tool | What it shows |
@@ -9,14 +9,14 @@ palette. Start some music first so `cava` actually moves.
 | Music | juke | my Apple Music TUI, now-playing with lyrics/queue tabs |
 | Monitor | btop | animated CPU / mem / net |
 | Audio | cava | dancing bars, whatever juke is playing |
-| Files | yazi | real image preview of `batman jazz.jpg` |
+| Files | yazi | real image preview of `themes/batman-jazz/wallpaper.jpg` |
 | Git | lazygit | this repo's commit graph |
-| Docs | glow | renders `PALETTE.md` so you see the color table |
+| Docs | glow | renders `themes/<slug>/README.md` so you see the color table |
 | Shell | p10k | plain prompt, git status, a colored `eza`/`ls` |
 
 ## GUI (optional, for a wider multi-window shot)
 
-- zed / vscode with `PALETTE.md` or a `.theme` file open, to get syntax
+- zed / vscode with `themes/<slug>/README.md` or a `.theme` file open, to get syntax
   highlighting in the palette.
 - zen — themed browser, framed on r/unixporn or GitHub.
 
