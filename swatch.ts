@@ -90,6 +90,45 @@ export function listThemes(): string[] {
     .sort();
 }
 
+/**
+ * A theme's wallpapers, sorted. One theme, many pictures: the palette is the
+ * theme, the picture is a mood inside it.
+ *
+ * Sorted because the order is a user-facing contract — `list` numbers this
+ * array, `--pick 3` indexes it, and the fzf menu shows it. readdirSync returns
+ * filesystem order, which differs between machines and after every write, so
+ * the number you read would not be the number you type.
+ */
+export function pool(dir: string): string[] {
+  const wp = join(dir, "wallpapers");
+  if (!existsSync(wp)) return [];
+  return readdirSync(wp).filter((f) => !f.startsWith(".")).sort();
+}
+
+/**
+ * Turn a `--pick` argument into a filename. An integer is 1-based into `pool`;
+ * anything else is a filename prefix, because an index shifts the moment you
+ * add a picture and anything you write down should survive that.
+ *
+ * ponytail: no clamping, no nearest-match. A pick that does not resolve is a
+ * typo, and applying the wrong wallpaper successfully is the silent drift this
+ * tool exists to catch.
+ */
+export function resolvePick(arg: string, files: string[]): string {
+  if (!files.length) throw new Error("no wallpapers in this theme");
+  if (/^\d+$/.test(arg)) {
+    const f = files[Number(arg) - 1];
+    if (!f) throw new Error(`--pick ${arg} out of range, this theme has ${files.length}`);
+    return f;
+  }
+  const hits = files.filter((f) => f.startsWith(arg));
+  if (hits.length !== 1)
+    throw new Error(
+      `--pick ${arg} matches ${hits.length} wallpapers\n  ${files.map((f, i) => `${i + 1}. ${f}`).join("\n  ")}`,
+    );
+  return hits[0]!;
+}
+
 // ── surfaces ────────────────────────────────────────────────────────────────
 // A surface returns its name when it applied the theme, or null when the app
 // isn't set up on this machine. Nothing here rewrites a whole config: swatch
@@ -106,6 +145,9 @@ type Surface = { name: string; apply: (t: Theme) => string | null };
 // process. Thread it if swatch ever applies two themes concurrently.
 let CHECK = false;
 let PENDING: string[] = [];
+// The wallpaper `use` settled on before any surface ran. Undefined means nobody
+// chose, so the wallpaper surface falls back to whatever is already up.
+let PICKED: string | undefined;
 
 function put(path: string, content: string) {
   if (CHECK) {
@@ -404,11 +446,17 @@ export const SURFACES: Surface[] = [
   {
     name: "wallpaper",
     apply(t) {
-      const file = readdirSync(t.dir).find((f) => f.startsWith("wallpaper."));
-      if (!file) return null;
-      const want = join(t.dir, file);
+      const files = pool(t.dir);
+      if (!files.length) return null;
+      const at = (f: string) => join(t.dir, "wallpapers", f);
+      const cur = currentWallpaper();
+      // Sticky, with no state file: the picture already on screen IS the
+      // remembered choice, so re-applying a theme leaves it alone instead of
+      // yanking you back to the first one. Only a fresh theme starts at [0].
+      const file = PICKED ?? files.find((f) => at(f) === cur) ?? files[0]!;
+      const want = at(file);
       if (CHECK) {
-        if (currentWallpaper() !== want) PENDING.push("desktop picture");
+        if (cur !== want) PENDING.push("desktop picture");
         return `wallpaper (${file})`;
       }
       return `wallpaper (${file}, ${setWallpaper(want)})`;

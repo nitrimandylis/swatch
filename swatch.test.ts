@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -285,4 +285,34 @@ test("isDynamicWallpaper spots apple_desktop metadata", () => {
   const faked = join(tmpdir(), "swatch-fixture-dynamic.heic");
   writeFileSync(faked, "....apple_desktop:solar....");
   expect(isDynamicWallpaper(faked)).toBe(true);
+});
+
+test("pool sorts, so the number you read is the number you type", () => {
+  // readdirSync returns filesystem order, which is creation order here. Write
+  // them backwards so an unsorted pool would fail this.
+  const dir = join(tmpdir(), "swatch-pool");
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(join(dir, "wallpapers"), { recursive: true });
+  for (const f of ["c.png", "a.png", "b.png", ".DS_Store"])
+    writeFileSync(join(dir, "wallpapers", f), "x");
+
+  expect(pool(dir)).toEqual(["a.png", "b.png", "c.png"]);
+  expect(pool(join(tmpdir(), "swatch-pool-missing"))).toEqual([]);
+});
+
+test("resolvePick takes an index or a name, and refuses anything else", () => {
+  const files = ["aurora.png", "fjord.png", "frost.jpg"];
+
+  expect(resolvePick("1", files)).toBe("aurora.png");
+  expect(resolvePick("3", files)).toBe("frost.jpg");
+  expect(resolvePick("aurora.png", files)).toBe("aurora.png");
+  expect(resolvePick("au", files)).toBe("aurora.png");
+
+  // 1-based, so 0 is out of range at the bottom as well as the top.
+  expect(() => resolvePick("0", files)).toThrow(/out of range/);
+  expect(() => resolvePick("4", files)).toThrow(/out of range/);
+  expect(() => resolvePick("nope", files)).toThrow(/matches 0/);
+  // "f" is ambiguous. Guessing here would apply the wrong wallpaper silently.
+  expect(() => resolvePick("f", files)).toThrow(/matches 2/);
+  expect(() => resolvePick("1", [])).toThrow(/no wallpapers/);
 });
