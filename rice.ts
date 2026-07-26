@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { readdirSync, existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 
 // Colour documents live in templates/ rather than in this file: they are long,
@@ -95,6 +95,27 @@ export function listThemes(): string[] {
 const CONFIG = join(homedir(), ".config");
 
 type Surface = { name: string; apply: (t: Theme) => string | null };
+
+// `rice status` is `rice use` with the writes turned off: every surface computes
+// exactly what it would put on disk and we report the files that differ. That
+// keeps one code path instead of a second set of per-surface readers.
+// ponytail: module-level flag, not a threaded context — there is one CLI run per
+// process. Thread it if rice ever applies two themes concurrently.
+let CHECK = false;
+let PENDING: string[] = [];
+
+function put(path: string, content: string) {
+  if (CHECK) {
+    if (!existsSync(path) || readFileSync(path, "utf8") !== content) PENDING.push(path);
+    return;
+  }
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, content);
+}
+
+function run(cmd: string[]) {
+  if (!CHECK) Bun.spawnSync(cmd);
+}
 
 /** Swap the one line matching `re`. Hard-fails unless the match count is exactly 1. */
 export function replaceLine(text: string, re: RegExp, line: string): string {
@@ -262,10 +283,8 @@ export const SURFACES: Surface[] = [
       const dir = join(CONFIG, "ghostty");
       const cfg = join(dir, "config");
       if (!existsSync(cfg)) return null;
-      mkdirSync(join(dir, "themes"), { recursive: true });
-      writeFileSync(join(dir, "themes", t.slug), ghosttyTheme(t));
-      writeFileSync(
-        cfg,
+      put(join(dir, "themes", t.slug), ghosttyTheme(t));
+      put(cfg,
         replaceLine(readFileSync(cfg, "utf8"), /^theme = .*$/, `theme = ${t.slug}`),
       );
       return "ghostty (supacode reads this config; p10k + fastfetch inherit its ANSI)";
@@ -277,10 +296,8 @@ export const SURFACES: Surface[] = [
       const dir = join(CONFIG, "btop");
       const cfg = join(dir, "btop.conf");
       if (!existsSync(cfg)) return null;
-      mkdirSync(join(dir, "themes"), { recursive: true });
-      writeFileSync(join(dir, "themes", `${t.slug}.theme`), btopTheme(t));
-      writeFileSync(
-        cfg,
+      put(join(dir, "themes", `${t.slug}.theme`), btopTheme(t));
+      put(cfg,
         replaceLine(readFileSync(cfg, "utf8"), /^color_theme = .*$/, `color_theme = "${t.slug}"`),
       );
       return "btop";
@@ -295,7 +312,7 @@ export const SURFACES: Surface[] = [
         `active_color=${argb(t.roles.accent)}`,
         `inactive_color=${argb(t.ansi.black[0])}`,
       ].join("\n");
-      writeFileSync(rc, inject(readFileSync(rc, "utf8"), body));
+      put(rc, inject(readFileSync(rc, "utf8"), body));
       return "borders (reload: brew services restart borders)";
     },
   },
@@ -306,7 +323,17 @@ export const SURFACES: Surface[] = [
       if (!file) return null;
       // ponytail: JSON.stringify quotes the path well enough for AppleScript;
       // theme dirs are slugs, so no quotes or backslashes to escape.
-      const script = `tell application "System Events" to set picture of every desktop to ${JSON.stringify(join(t.dir, file))}`;
+      const want = join(t.dir, file);
+      if (CHECK) {
+        const now = Bun.spawnSync([
+          "osascript", "-e", 'tell application "System Events" to get picture of desktop 1',
+        ]).stdout.toString().trim();
+        if (now !== want) PENDING.push("desktop picture");
+        return `wallpaper (${file})`;
+      }
+      // ponytail: JSON.stringify quotes the path well enough for AppleScript;
+      // theme dirs are slugs, so no quotes or backslashes to escape.
+      const script = `tell application "System Events" to set picture of every desktop to ${JSON.stringify(want)}`;
       const r = Bun.spawnSync(["osascript", "-e", script]);
       if (r.exitCode !== 0) throw new Error(`wallpaper: ${r.stderr.toString().trim()}`);
       return `wallpaper (${file})`;
@@ -317,8 +344,8 @@ export const SURFACES: Surface[] = [
     apply(t) {
       const f = join(CONFIG, "sketchybar", "colors.sh");
       if (!existsSync(f)) return null;
-      writeFileSync(f, inject(readFileSync(f, "utf8"), sketchybarColors(t)));
-      Bun.spawnSync(["sketchybar", "--reload"]);
+      put(f, inject(readFileSync(f, "utf8"), sketchybarColors(t)));
+      run(["sketchybar", "--reload"]);
       return "sketchybar";
     },
   },
@@ -329,11 +356,9 @@ export const SURFACES: Surface[] = [
       const theme = join(dir, "theme.toml");
       if (!existsSync(theme)) return null;
       const flavor = join(dir, "flavors", `${t.slug}.yazi`);
-      mkdirSync(flavor, { recursive: true });
-      writeFileSync(join(flavor, "flavor.toml"), render(yaziTpl, t));
+      put(join(flavor, "flavor.toml"), render(yaziTpl, t));
       const key = t.meta.variant === "dark" ? "dark" : "light";
-      writeFileSync(
-        theme,
+      put(theme,
         replaceLine(readFileSync(theme, "utf8"), new RegExp(`^${key} = .*$`), `${key} = "${t.slug}"`),
       );
       return "yazi";
@@ -346,9 +371,8 @@ export const SURFACES: Surface[] = [
       const yml = join(dir, "glow.yml");
       if (!existsSync(yml)) return null;
       const style = join(dir, `${t.slug}.json`);
-      writeFileSync(style, render(glowTpl, t));
-      writeFileSync(
-        yml,
+      put(style, render(glowTpl, t));
+      put(yml,
         replaceLine(readFileSync(yml, "utf8"), /^style: .*$/, `style: "${style}"`),
       );
       return "glow";
@@ -360,13 +384,11 @@ export const SURFACES: Surface[] = [
       const dir = join(CONFIG, "zed");
       const settings = join(dir, "settings.json");
       if (!existsSync(settings)) return null;
-      mkdirSync(join(dir, "themes"), { recursive: true });
-      writeFileSync(join(dir, "themes", `${t.slug}.json`), render(zedTpl, t));
+      put(join(dir, "themes", `${t.slug}.json`), render(zedTpl, t));
       // ponytail: settings.json is JSONC — regex the one line, never parse and
       // re-serialise, which would drop every comment in the file.
       const key = t.meta.variant === "dark" ? "dark" : "light";
-      writeFileSync(
-        settings,
+      put(settings,
         replaceInBlock(
           readFileSync(settings, "utf8"),
           "theme",
@@ -385,9 +407,7 @@ export const SURFACES: Surface[] = [
       );
       if (!existsSync(settings)) return null;
       const ext = join(homedir(), ".vscode", "extensions", `${t.slug}-theme`);
-      mkdirSync(join(ext, "themes"), { recursive: true });
-      writeFileSync(
-        join(ext, "package.json"),
+      put(join(ext, "package.json"),
         JSON.stringify(
           {
             name: `${t.slug}-theme`,
@@ -410,9 +430,8 @@ export const SURFACES: Surface[] = [
           2,
         ) + "\n",
       );
-      writeFileSync(join(ext, "themes", `${t.slug}-color-theme.json`), render(vscodeTpl, t));
-      writeFileSync(
-        settings,
+      put(join(ext, "themes", `${t.slug}-color-theme.json`), render(vscodeTpl, t));
+      put(settings,
         replaceLine(
           readFileSync(settings, "utf8"),
           /^(\s*)"workbench\.colorTheme": ".*",?$/,
@@ -427,8 +446,7 @@ export const SURFACES: Surface[] = [
     apply(t) {
       const share = join(homedir(), ".local", "share", "vicinae");
       if (!existsSync(share)) return null;
-      mkdirSync(join(share, "themes"), { recursive: true });
-      writeFileSync(join(share, "themes", `${t.slug}.toml`), render(vicinaeTpl, t));
+      put(join(share, "themes", `${t.slug}.toml`), render(vicinaeTpl, t));
       return "vicinae";
     },
   },
@@ -437,7 +455,7 @@ export const SURFACES: Surface[] = [
     apply(t) {
       const f = join(CONFIG, "cava", "config");
       if (!existsSync(f)) return null;
-      writeFileSync(f, inject(readFileSync(f, "utf8"), cavaGradient(t)));
+      put(f, inject(readFileSync(f, "utf8"), cavaGradient(t)));
       return "cava";
     },
   },
@@ -446,7 +464,7 @@ export const SURFACES: Surface[] = [
     apply(t) {
       const f = join(CONFIG, "lazygit", "config.yml");
       if (!existsSync(f)) return null;
-      writeFileSync(f, inject(readFileSync(f, "utf8"), render(lazygitTpl, t)));
+      put(f, inject(readFileSync(f, "utf8"), render(lazygitTpl, t)));
       return "lazygit";
     },
   },
@@ -458,16 +476,14 @@ export const SURFACES: Surface[] = [
       const js = join(dir, "user.js");
       const css = join(dir, "chrome", "userChrome.css");
       if (!existsSync(js) || !existsSync(css)) return null;
-      writeFileSync(
-        js,
+      put(js,
         inject(
           readFileSync(js, "utf8"),
           `user_pref("zen.theme.accent-color", "${t.roles.accent}");`,
           "//",
         ),
       );
-      writeFileSync(
-        css,
+      put(css,
         inject(readFileSync(css, "utf8"), render(zenCssTpl, t), "/*", "*/"),
       );
       return "zen (restart Zen to pick it up)";
@@ -475,35 +491,221 @@ export const SURFACES: Surface[] = [
   },
 ];
 
+// ── extraction ──────────────────────────────────────────────────────────────
+// `sips` shrinks any image macOS can open to a small BMP, which is a header
+// plus raw pixels — no image library needed for either step.
+
+export type Px = { r: number; g: number; b: number };
+
+/** Read pixels out of an uncompressed 24/32-bit BMP. */
+export function readBmp(buf: ArrayBuffer): Px[] {
+  const d = new DataView(buf);
+  if (d.getUint8(0) !== 0x42 || d.getUint8(1) !== 0x4d) throw new Error("not a BMP");
+  const offset = d.getUint32(10, true);
+  const width = d.getInt32(18, true);
+  const rawHeight = d.getInt32(22, true);
+  const bpp = d.getUint16(28, true);
+  if (bpp !== 24 && bpp !== 32) throw new Error(`BMP is ${bpp}-bit, expected 24 or 32`);
+  const bytes = bpp / 8;
+  // A negative height means the rows are stored top-down. sips writes them that
+  // way; the row order does not matter to us, but the magnitude does.
+  const height = Math.abs(rawHeight);
+  const stride = Math.ceil((width * bytes) / 4) * 4; // rows pad to 4 bytes
+  const out: Px[] = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = offset + y * stride + x * bytes;
+      out.push({ b: d.getUint8(i), g: d.getUint8(i + 1), r: d.getUint8(i + 2) });
+    }
+  }
+  return out;
+}
+
+const lum = (p: Px) => 0.2126 * p.r + 0.7152 * p.g + 0.0722 * p.b;
+/**
+ * Absolute chroma, not relative. `(max - min) / max` ranks a #030100 pixel above
+ * a strong mid-tone, so near-black noise wins every time; the plain spread does
+ * not have that failure mode.
+ */
+const chroma = (p: Px) => Math.max(p.r, p.g, p.b) - Math.min(p.r, p.g, p.b);
+const hex = (p: Px) =>
+  "#" + [p.r, p.g, p.b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+
+/** Average a bucket of pixels into one colour. */
+function mean(px: Px[]): Px {
+  const s = px.reduce((a, p) => ({ r: a.r + p.r, g: a.g + p.g, b: a.b + p.b }), { r: 0, g: 0, b: 0 });
+  return { r: s.r / px.length, g: s.g / px.length, b: s.b / px.length };
+}
+
+/**
+ * Pull structural roles out of an image. Accent is deliberately NOT extracted:
+ * the loudest colour in a rice is usually a deliberate choice that the source
+ * image does not contain. Callers mark it TODO.
+ */
+export function extractRoles(px: Px[]) {
+  const sorted = [...px].sort((a, b) => lum(a) - lum(b));
+  const at = (f: number) =>
+    sorted[Math.max(0, Math.min(sorted.length - 1, Math.floor(sorted.length * f)))]!;
+  // Trim only the extreme tails. A wider trim (2%/98%) lands inside the dark
+  // block of a near-black image and collapses the whole range to nothing.
+  const lo = lum(at(0.005));
+  const hi = lum(at(0.995));
+  const span = Math.max(1, hi - lo);
+
+  // Step through the image's luminance RANGE, not its pixel population. A
+  // near-black photo has most of its pixels in the shadows, so population
+  // percentiles collapse surface and overlay into the same black; walking the
+  // range finds the real midtones however few pixels carry them.
+  const band = (f: number) => {
+    const target = lo + span * f;
+    let width = span * 0.05;
+    for (let i = 0; i < 5; i++, width *= 2) {
+      const near = px.filter((p) => Math.abs(lum(p) - target) <= width);
+      if (near.length >= 8) return mean(near);
+    }
+    return at(f);
+  };
+
+  // deep = the most saturated colour in the lower half of the range. Without the
+  // ceiling this picks whatever highlight is brightest, which is not a "deep".
+  const mid = lo + span * 0.55;
+  const cands = px.filter((p) => lum(p) > lo + span * 0.08 && lum(p) < mid);
+  const deep = cands.length
+    ? cands.reduce((best, p) => (chroma(p) > chroma(best) ? p : best))
+    : band(0.4);
+
+  return {
+    base: hex(band(0.0)),
+    surface: hex(band(0.18)),
+    overlay: hex(band(0.42)),
+    muted: hex(band(0.62)),
+    text: hex(band(1.0)),
+    deep: hex(deep),
+  };
+}
+
+/** Scaffold a palette.toml. Structure comes from the image, identity does not. */
+export function scaffoldPalette(name: string, variant: "dark" | "light", roles: ReturnType<typeof extractRoles>): string {
+  const ref: [AnsiName, string][] = [
+    ["red", "#cc4455"], ["green", "#7d9b6f"], ["yellow", "#c9a76a"],
+    ["blue", "#4e749e"], ["magenta", "#b06a8f"], ["cyan", "#4a8f9e"],
+  ];
+  const ansi = [
+    `black   = ["${mix(roles.base, roles.text, 0.12)}", "${roles.muted}"]`,
+    ...ref.map(([n, h]) =>
+      `${n.padEnd(7)} = ["${mix(h, roles.base, 0.3)}", "${mix(h, roles.text, 0.25)}"]`),
+    `white   = ["${roles.text}", "${mix(roles.text, "#ffffff", 0.4)}"]`,
+  ];
+  const order: AnsiName[] = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"];
+  const byName = new Map(ansi.map((l) => [l.split(/\s*=/)[0]!.trim(), l]));
+  return `[meta]
+name = "${name}"
+variant = "${variant}"
+description = "TODO: one line, what the room feels like"
+
+[roles]
+base    = "${roles.base}"
+surface = "${roles.surface}"
+overlay = "${roles.overlay}"
+text    = "${roles.text}"
+muted   = "${roles.muted}"
+accent  = "TODO"   # the loud one — pick it, the image will not give it to you
+deep    = "${roles.deep}"
+on_fill = "${variant === "dark" ? roles.base : roles.text}"
+
+[extras]
+# orange = "#..."   # only if a surface asks for it (vicinae does)
+
+# Seeded from reference hues pulled toward the image. Tune by eye.
+[ansi]
+${order.map((n) => byName.get(n)).join("\n")}
+`;
+}
+
 const HELP = `rice — switch the whole desktop to a theme
 
 usage:
-  rice list              show available themes
-  rice use <theme>       apply a theme to every surface
-  rice -h, --help        this
+  rice list                  show available themes
+  rice use <theme>           apply a theme to every surface
+  rice status [theme]        what a re-apply would change, without changing it
+  rice new <name> <image>    scaffold a theme from a wallpaper
+  rice -h, --help            this
 `;
 
+function slugify(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 function main() {
-  const [cmd, arg] = process.argv.slice(2);
+  const [cmd, ...args] = process.argv.slice(2);
 
   if (!cmd || cmd === "-h" || cmd === "--help") return console.log(HELP);
 
   if (cmd === "list") {
     for (const slug of listThemes()) {
-      const t = loadTheme(slug);
-      console.log(`${slug.padEnd(16)} ${t.meta.name} (${t.meta.variant}) — ${t.meta.description}`);
+      // A theme scaffolded by `rice new` is unfinished by design, so list has to
+      // survive it — refusing to load is `use`'s job, not list's.
+      try {
+        const t = loadTheme(slug);
+        console.log(`${slug.padEnd(16)} ${t.meta.name} (${t.meta.variant}) — ${t.meta.description}`);
+      } catch (e) {
+        console.log(`${slug.padEnd(16)} unfinished — ${(e as Error).message.replace(`${slug}: `, "")}`);
+      }
     }
     return;
   }
 
   if (cmd === "use") {
-    if (!arg) throw new Error("usage: rice use <theme>");
-    const t = loadTheme(arg);
+    const [slug] = args;
+    if (!slug) throw new Error("usage: rice use <theme>");
+    const t = loadTheme(slug);
     console.log(t.meta.name);
     for (const s of SURFACES) {
       const done = s.apply(t);
       console.log(done ? `  ✓ ${done}` : `  · ${s.name} not set up here, skipped`);
     }
+    return;
+  }
+
+  if (cmd === "status") {
+    const slug = args[0] ?? listThemes()[0];
+    if (!slug) throw new Error("no themes yet — try: rice new <name> <image>");
+    const t = loadTheme(slug);
+    CHECK = true;
+    console.log(`${t.meta.name}: what "rice use ${slug}" would change`);
+    for (const s of SURFACES) {
+      PENDING = [];
+      const present = s.apply(t);
+      if (!present) console.log(`  · ${s.name} not set up here`);
+      else if (!PENDING.length) console.log(`  ✓ ${s.name} in sync`);
+      else for (const p of PENDING) console.log(`  ✗ ${s.name} would rewrite ${p.replace(homedir(), "~")}`);
+    }
+    return;
+  }
+
+  if (cmd === "new") {
+    const [name, image] = args;
+    if (!name || !image) throw new Error("usage: rice new <name> <image>");
+    if (!existsSync(image)) throw new Error(`no such image: ${image}`);
+    const slug = slugify(name);
+    const dir = join(THEMES, slug);
+    if (existsSync(dir)) throw new Error(`theme "${slug}" already exists`);
+
+    const bmp = join("/tmp", `rice-${slug}.bmp`);
+    const r = Bun.spawnSync(["sips", "-s", "format", "bmp", "-Z", "96", image, "--out", bmp]);
+    if (r.exitCode !== 0) throw new Error(`sips: ${r.stderr.toString().trim()}`);
+    const px = readBmp(readFileSync(bmp).buffer as ArrayBuffer);
+    const roles = extractRoles(px);
+    const bg = { r: parseInt(roles.base.slice(1, 3), 16), g: parseInt(roles.base.slice(3, 5), 16), b: parseInt(roles.base.slice(5, 7), 16) };
+    const variant = lum(bg) > 128 ? "light" : "dark";
+
+    mkdirSync(dir, { recursive: true });
+    const ext = image.slice(image.lastIndexOf("."));
+    writeFileSync(join(dir, `wallpaper${ext}`), readFileSync(image));
+    writeFileSync(join(dir, "palette.toml"), scaffoldPalette(name, variant, roles));
+    console.log(`themes/${slug}/ scaffolded (${variant})`);
+    for (const [k, v] of Object.entries(roles)) console.log(`  ${k.padEnd(8)} ${v}`);
+    console.log(`\n  accent is TODO — pick it by hand, then: rice use ${slug}`);
     return;
   }
 

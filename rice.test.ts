@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME, mix, cavaGradient, zenProfile } from "./rice";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME, mix, cavaGradient, zenProfile, readBmp, extractRoles, scaffoldPalette } from "./rice";
 
 const GOOD = `
 [meta]
@@ -181,4 +181,53 @@ test("inject supports paired comment delimiters for CSS", () => {
 
 test("zen profile resolution prefers the Install section over Default=1", () => {
   expect(zenProfile()).toContain("bguf1cno");
+});
+
+test("readBmp reads a hand-built 2x2 24-bit BMP", () => {
+  // BGR pixels, rows padded to 4 bytes: 2px * 3 bytes = 6 -> 8 bytes per row
+  const header = new Uint8Array(54);
+  const d = new DataView(header.buffer);
+  header[0] = 0x42; header[1] = 0x4d;
+  d.setUint32(10, 54, true); // pixel offset
+  d.setInt32(18, 2, true); // width
+  d.setInt32(22, -2, true); // height, negative = top-down like sips writes
+  d.setUint16(28, 24, true); // bpp
+  const rows = new Uint8Array([
+    0, 0, 255, 0, 255, 0, 0, 0, // red, green + 2 pad
+    255, 0, 0, 255, 255, 255, 0, 0, // blue, white + 2 pad
+  ]);
+  const buf = new Uint8Array(54 + rows.length);
+  buf.set(header); buf.set(rows, 54);
+  const px = readBmp(buf.buffer);
+  expect(px).toHaveLength(4);
+  expect(px[0]).toEqual({ r: 255, g: 0, b: 0 });
+  expect(px[1]).toEqual({ r: 0, g: 255, b: 0 });
+  expect(px[2]).toEqual({ r: 0, g: 0, b: 255 });
+  expect(px[3]).toEqual({ r: 255, g: 255, b: 255 });
+});
+
+test("extractRoles walks the luminance range, not the pixel population", () => {
+  // 1000 near-black pixels plus a handful of real midtones: percentile-based
+  // sampling would return black for surface and overlay.
+  const px = [
+    ...Array.from({ length: 1000 }, () => ({ r: 8, g: 8, b: 10 })),
+    ...Array.from({ length: 10 }, () => ({ r: 18, g: 32, b: 49 })),
+    ...Array.from({ length: 10 }, () => ({ r: 41, g: 74, b: 109 })),
+    ...Array.from({ length: 10 }, () => ({ r: 197, g: 211, b: 224 })),
+  ];
+  const roles = extractRoles(px);
+  expect(parseInt(roles.base.slice(1, 3), 16)).toBeLessThan(0x20);
+  expect(parseInt(roles.text.slice(1, 3), 16)).toBeGreaterThan(0x80);
+  expect(roles.surface).not.toBe(roles.base); // the whole point
+});
+
+test("scaffolded palettes are refused until the accent is chosen", () => {
+  const p = scaffoldPalette("X", "dark", extractRoles([
+    { r: 8, g: 8, b: 10 }, { r: 41, g: 74, b: 109 }, { r: 197, g: 211, b: 224 },
+  ]));
+  expect(p).toContain('accent  = "TODO"');
+  expect(() => parseTheme("x", "/tmp", p)).toThrow(/TODO/);
+  // every other role and the full ansi set must still be present
+  expect(() => parseTheme("x", "/tmp", p.replace('"TODO"', '"#ff00aa"').replace("TODO: one line", "a room")))
+    .not.toThrow();
 });
