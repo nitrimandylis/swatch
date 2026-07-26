@@ -128,9 +128,10 @@ themes built this way show why:
 
 - Against the Nord wallpaper it returns `#2e3440` for `base`, which is nord0 to
   the byte, and lands within a few units on `text` and `deep`. Structure holds up.
-- Against the Firewatch wallpaper the accent anyone would name is the amber in
-  the tower window, `#fedb01` — 0.137% of the image, and gone entirely by the
-  time it is sampled at 96px.
+- Against the Firewatch wallpaper the two accent candidates — the amber in the
+  tower window and the magenta treeline — are 0.137% and 4% of the image. The
+  amber is gone entirely by the time it is sampled at 96px, and choosing between
+  them is a judgement about what the picture is *of*, not a measurement.
 
 No amount of sampling recovers the second one, which is the whole argument for
 leaving that field blank.
