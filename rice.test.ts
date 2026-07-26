@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme } from "./rice";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme } from "./rice";
 
 const GOOD = `
 [meta]
@@ -79,6 +79,13 @@ test("ghostty theme uses bare hex and orders palette normals then brights", () =
   expect(g).toContain("palette = 6=#4a8f9e"); // cyan normal
   expect(g).toContain("palette = 14=#67aab8"); // cyan bright
   expect(g).not.toContain("theme ="); // banned inside a ghostty theme file
+});
+
+test("btop theme covers every key btop reads", () => {
+  const b = btopTheme(parseTheme("test", "/tmp", GOOD));
+  expect(b).toContain('theme[main_bg]="#000000"');
+  expect(b).toContain('theme[used_end]="#ff00aa"'); // accent tops the ram gradient
+  expect(b.match(/theme\[/g)).toHaveLength(42);
 });
 
 test("batman-jazz loads from disk", () => {
