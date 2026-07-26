@@ -29,8 +29,8 @@ color document is generated, including the per-theme README.
 - **Explicit palette, nothing derived.** Hand-tuned green and cyan are not in
   the Batman Jazz image at all. Taste beats a color formula.
 - **Say what needs a restart.** VS Code and Zen only pick up a theme after
-  relaunching; borders needs a service restart. Rice prints that rather than
-  pretending it applied.
+  relaunching. Rice prints that rather than pretending it applied. Everything
+  else reloads in place, borders included.
 
 ## State
 

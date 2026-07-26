@@ -13,9 +13,11 @@ import yaziTpl from "./templates/yazi.toml" with { type: "text" };
 import lazygitTpl from "./templates/lazygit.yml" with { type: "text" };
 import zenCssTpl from "./templates/zen-userChrome.css" with { type: "text" };
 
-// ponytail: repo path, not import.meta.dir — the compiled binary outlives its
-// build directory but still needs to read themes/ at runtime.
-export const RICE_HOME = process.env.RICE_HOME ?? join(homedir(), "cc", "rice");
+// The compiled binary outlives its build directory but still has to read themes/
+// at runtime, so `bun run compile` bakes the repo path in (it runs from the repo
+// root). Running this file directly — tests, `bun rice.ts` — has no baked value
+// and falls back to its own directory. RICE_HOME overrides both.
+export const RICE_HOME = process.env.RICE_HOME ?? process.env.RICE_BAKED_HOME ?? import.meta.dir;
 const THEMES = join(RICE_HOME, "themes");
 
 export type Theme = {
@@ -754,6 +756,12 @@ function main() {
   const [cmd, ...args] = process.argv.slice(2);
 
   if (!cmd || cmd === "-h" || cmd === "--help") return console.log(HELP);
+
+  // A baked path goes stale when the checkout moves, and a binary built without
+  // `bun run compile` has no path at all. Both look like an empty repo to every
+  // reader below, so say which it is instead of reporting nothing to do.
+  if (!existsSync(THEMES))
+    throw new Error(`no themes/ under ${RICE_HOME} — set RICE_HOME to your rice checkout, or rebuild with: bun run compile`);
 
   if (cmd === "list") {
     for (const slug of listThemes()) {

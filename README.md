@@ -116,6 +116,11 @@ rice use batman-jazz
 man rice           # full reference, offline
 ```
 
+Clone it wherever you like. Themes live in the checkout rather than in a dotfile
+directory, so `bun run compile` bakes that path into the binary and `rice` works
+from any cwd. Move the checkout afterwards and rice says so; recompile, or set
+`RICE_HOME` to the new path.
+
 Building a new one starts from an image:
 
 ```bash

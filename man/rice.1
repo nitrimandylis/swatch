@@ -45,7 +45,9 @@ Show help.
 .SH ENVIRONMENT
 .TP
 .B RICE_HOME
-Path to the rice repository. Defaults to \fI~/cc/rice\fR.
+Path to the rice repository, which holds \fIthemes/\fR. Defaults to the
+directory \fBbun run compile\fR was run from, baked into the binary. Set this
+if the checkout has moved since.
 .SH NOTES
 VS Code and Zen only pick up a new theme after the app restarts. Everything
 else reloads on its own: sketchybar and borders are reconfigured in place, and
