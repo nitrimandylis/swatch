@@ -1,0 +1,181 @@
+{
+  "name": "${m.name}",
+  "type": "${m.variant}",
+  "colors": {
+    "editor.background": "${r.base}",
+    "editor.foreground": "${r.text}",
+    "editorLineNumber.foreground": "${r.muted}",
+    "editorLineNumber.activeForeground": "${r.text}",
+    "editorCursor.foreground": "${r.accent}",
+    "editor.selectionBackground": "${r.overlay}",
+    "editor.selectionHighlightBackground": "${r.overlay}80",
+    "editor.lineHighlightBackground": "${r.surface}",
+    "editorWhitespace.foreground": "${a.black[0]}",
+    "editorIndentGuide.background1": "${a.black[0]}",
+    "editorIndentGuide.activeBackground1": "${r.overlay}",
+    "editorBracketMatch.background": "${r.overlay}",
+    "editorBracketMatch.border": "${r.accent}",
+
+    "editorGutter.addedBackground": "${a.green[0]}",
+    "editorGutter.modifiedBackground": "${a.blue[0]}",
+    "editorGutter.deletedBackground": "${a.red[0]}",
+
+    "editorError.foreground": "${a.red[1]}",
+    "editorWarning.foreground": "${a.yellow[0]}",
+    "editorInfo.foreground": "${a.blue[0]}",
+
+    "sideBar.background": "${r.base}",
+    "sideBar.foreground": "${r.text}",
+    "sideBar.border": "${r.surface}",
+    "sideBarSectionHeader.background": "${r.base}",
+    "sideBarTitle.foreground": "${r.muted}",
+    "list.activeSelectionBackground": "${r.surface}",
+    "list.activeSelectionForeground": "${a.white[1]}",
+    "list.hoverBackground": "${r.surface}",
+    "list.inactiveSelectionBackground": "${r.surface}",
+
+    "activityBar.background": "${r.base}",
+    "activityBar.foreground": "${r.text}",
+    "activityBar.inactiveForeground": "${r.muted}",
+    "activityBarBadge.background": "${r.accent}",
+    "activityBarBadge.foreground": "${r.on_fill}",
+
+    "statusBar.background": "${r.base}",
+    "statusBar.foreground": "${r.text}",
+    "statusBar.border": "${r.surface}",
+    "statusBar.noFolderBackground": "${r.base}",
+    "statusBar.debuggingBackground": "${r.accent}",
+    "statusBar.debuggingForeground": "${r.on_fill}",
+
+    "titleBar.activeBackground": "${r.base}",
+    "titleBar.activeForeground": "${r.text}",
+    "titleBar.inactiveBackground": "${r.base}",
+    "titleBar.inactiveForeground": "${r.muted}",
+
+    "tab.activeBackground": "${r.base}",
+    "tab.activeForeground": "${a.white[1]}",
+    "tab.inactiveBackground": "${r.base}",
+    "tab.inactiveForeground": "${r.muted}",
+    "tab.activeBorderTop": "${r.accent}",
+    "tab.border": "${r.surface}",
+    "editorGroupHeader.tabsBackground": "${r.base}",
+    "editorGroupHeader.tabsBorder": "${r.surface}",
+
+    "panel.background": "${r.base}",
+    "panelTitle.activeForeground": "${r.text}",
+    "panelTitle.inactiveForeground": "${r.muted}",
+
+    "terminal.background": "${r.base}",
+    "terminal.foreground": "${r.text}",
+    "terminal.ansiBlack": "${a.black[0]}",
+    "terminal.ansiBrightBlack": "${a.black[1]}",
+    "terminal.ansiRed": "${a.red[0]}",
+    "terminal.ansiBrightRed": "${a.red[1]}",
+    "terminal.ansiGreen": "${a.green[0]}",
+    "terminal.ansiBrightGreen": "${a.green[1]}",
+    "terminal.ansiYellow": "${a.yellow[0]}",
+    "terminal.ansiBrightYellow": "${a.yellow[1]}",
+    "terminal.ansiBlue": "${a.blue[0]}",
+    "terminal.ansiBrightBlue": "${a.blue[1]}",
+    "terminal.ansiMagenta": "${a.magenta[0]}",
+    "terminal.ansiBrightMagenta": "${a.magenta[1]}",
+    "terminal.ansiCyan": "${a.cyan[0]}",
+    "terminal.ansiBrightCyan": "${a.cyan[1]}",
+    "terminal.ansiWhite": "${a.white[0]}",
+    "terminal.ansiBrightWhite": "${a.white[1]}",
+
+    "input.background": "${r.surface}",
+    "input.foreground": "${r.text}",
+    "focusBorder": "${r.overlay}",
+    "widget.shadow": "#00000080",
+    "scrollbarSlider.background": "${r.overlay}80",
+    "scrollbarSlider.hoverBackground": "${r.overlay}aa"
+  },
+  "tokenColors": [
+    {
+      "scope": ["comment", "punctuation.definition.comment"],
+      "settings": { "foreground": "${r.muted}", "fontStyle": "italic" }
+    },
+    {
+      "scope": ["keyword", "keyword.control", "storage.type", "storage.modifier"],
+      "settings": { "foreground": "${r.accent}" }
+    },
+    {
+      "scope": ["keyword.operator"],
+      "settings": { "foreground": "${r.muted}" }
+    },
+    {
+      "scope": ["string", "string.quoted", "punctuation.definition.string"],
+      "settings": { "foreground": "${a.green[1]}" }
+    },
+    {
+      "scope": ["string.regexp"],
+      "settings": { "foreground": "${a.cyan[1]}" }
+    },
+    {
+      "scope": ["constant.numeric", "constant.language", "constant.character"],
+      "settings": { "foreground": "${a.cyan[1]}" }
+    },
+    {
+      "scope": ["constant.language.boolean", "constant.language.null"],
+      "settings": { "foreground": "${a.yellow[1]}" }
+    },
+    {
+      "scope": ["entity.name.function", "support.function", "meta.function-call.generic"],
+      "settings": { "foreground": "${a.yellow[1]}" }
+    },
+    {
+      "scope": ["entity.name.type", "entity.name.class", "support.type", "support.class", "entity.other.inherited-class"],
+      "settings": { "foreground": "${a.blue[1]}" }
+    },
+    {
+      "scope": ["variable", "variable.other", "meta.definition.variable"],
+      "settings": { "foreground": "${r.text}" }
+    },
+    {
+      "scope": ["variable.parameter"],
+      "settings": { "foreground": "${r.text}", "fontStyle": "italic" }
+    },
+    {
+      "scope": ["variable.language", "variable.language.this"],
+      "settings": { "foreground": "${r.accent}", "fontStyle": "italic" }
+    },
+    {
+      "scope": ["entity.name.tag", "support.type.property-name"],
+      "settings": { "foreground": "${a.blue[1]}" }
+    },
+    {
+      "scope": ["entity.other.attribute-name"],
+      "settings": { "foreground": "${a.yellow[0]}" }
+    },
+    {
+      "scope": ["punctuation", "meta.brace", "punctuation.separator", "punctuation.terminator"],
+      "settings": { "foreground": "${r.muted}" }
+    },
+    {
+      "scope": ["markup.heading", "entity.name.section"],
+      "settings": { "foreground": "${r.accent}", "fontStyle": "bold" }
+    },
+    {
+      "scope": ["markup.bold"],
+      "settings": { "foreground": "${a.yellow[1]}", "fontStyle": "bold" }
+    },
+    {
+      "scope": ["markup.italic"],
+      "settings": { "foreground": "${a.green[1]}", "fontStyle": "italic" }
+    },
+    {
+      "scope": ["markup.underline.link", "string.other.link"],
+      "settings": { "foreground": "${a.cyan[1]}", "fontStyle": "underline" }
+    },
+    {
+      "scope": ["invalid", "invalid.illegal"],
+      "settings": { "foreground": "${a.red[1]}" }
+    },
+    {
+      "scope": ["invalid.deprecated"],
+      "settings": { "foreground": "${r.deep}", "fontStyle": "strikethrough" }
+    }
+  ]
+}
+

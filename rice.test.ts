@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, yaziFlavor } from "./rice";
+import { readFileSync } from "node:fs";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME } from "./rice";
 
 const GOOD = `
 [meta]
@@ -114,11 +115,41 @@ test("sketchybar exports every var the plugins read", () => {
     expect(s).toContain(`export ${v}=0x`);
 });
 
-test("yazi flavor is valid TOML with no leftover literals", () => {
-  const f = yaziFlavor(parseTheme("test", "/tmp", GOOD));
-  const parsed = Bun.TOML.parse(f) as any;
-  expect(parsed.mode.normal_main.bg).toBe("#ff00aa");
-  expect(f).not.toContain("#e85a9c"); // no hardcoded Batman Jazz hex left behind
+test("render fills roles, ansi, extras, meta and keeps alpha suffixes", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  expect(render("${r.accent}", t)).toBe("#ff00aa");
+  expect(render("${a.cyan[1]}", t)).toBe("#67aab8");
+  expect(render("${m.name}/${m.variant}", t)).toBe("Test/dark");
+  expect(render("${r.overlay}80", t)).toBe("#22222280");
+});
+
+test("render throws rather than emitting undefined into a live config", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  expect(() => render("${r.nope}", t)).toThrow(/unknown/);
+  expect(() => render("${x.orange}", t)).toThrow(/unknown/); // GOOD has no [extras]
+});
+
+test("replaceInBlock disambiguates zed's two \"dark\" keys", () => {
+  const s = `{
+  "icon_theme": {
+    "dark": "Material"
+  },
+  "theme": {
+    "dark": "Old",
+  },
+}`;
+  const out = replaceInBlock(s, "theme", /^\s*"dark": ".*",?$/, '    "dark": "New",');
+  expect(out).toContain('"dark": "Material"');
+  expect(out).toContain('"dark": "New",');
+  expect(out).not.toContain('"Old"');
+});
+
+test("every template renders to a parseable document", () => {
+  const t = loadTheme("batman-jazz");
+  for (const f of ["zed.json", "glow.json", "vscode.json"])
+    expect(() => JSON.parse(render(readFileSync(`${RICE_HOME}/templates/${f}`, "utf8"), t))).not.toThrow();
+  for (const f of ["vicinae.toml", "yazi.toml"])
+    expect(() => Bun.TOML.parse(render(readFileSync(`${RICE_HOME}/templates/${f}`, "utf8"), t))).not.toThrow();
 });
 
 test("batman-jazz loads from disk", () => {

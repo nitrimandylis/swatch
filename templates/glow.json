@@ -1,0 +1,89 @@
+{
+  "document": {
+    "block_prefix": "\n",
+    "block_suffix": "\n",
+    "color": "${r.text}",
+    "margin": 2
+  },
+  "block_quote": {
+    "color": "${r.muted}",
+    "indent": 1,
+    "indent_token": "│ "
+  },
+  "paragraph": {},
+  "list": {
+    "color": "${r.text}",
+    "level_indent": 2
+  },
+  "heading": {
+    "block_suffix": "\n",
+    "color": "${r.accent}",
+    "bold": true
+  },
+  "h1": {
+    "prefix": " ",
+    "suffix": " ",
+    "color": "${r.on_fill}",
+    "background_color": "${r.accent}",
+    "bold": true
+  },
+  "h2": { "prefix": "## ",   "color": "${r.accent}", "bold": true },
+  "h3": { "prefix": "### ",  "color": "${a.magenta[0]}", "bold": true },
+  "h4": { "prefix": "#### ", "color": "${a.cyan[1]}" },
+  "h5": { "prefix": "##### ","color": "${a.blue[0]}" },
+  "h6": { "prefix": "###### ","color": "${r.muted}" },
+  "text": {},
+  "strong": { "color": "${a.white[1]}", "bold": true },
+  "emph": { "color": "${a.yellow[1]}", "italic": true },
+  "hr": { "color": "${r.overlay}", "format": "\n─────────\n" },
+  "item": { "block_prefix": "• " },
+  "enumeration": { "block_prefix": ". " },
+  "task": {
+    "ticked": "✓ ",
+    "unticked": "☐ "
+  },
+  "link": { "color": "${a.cyan[1]}", "underline": true },
+  "link_text": { "color": "${r.accent}", "bold": true },
+  "image": { "color": "${a.cyan[0]}", "underline": true },
+  "image_text": { "color": "${r.muted}", "format": "Image: {{.text}}" },
+  "code": {
+    "prefix": " ",
+    "suffix": " ",
+    "color": "${a.yellow[0]}",
+    "background_color": "${r.surface}"
+  },
+  "code_block": {
+    "color": "${r.text}",
+    "margin": 2,
+    "chroma": {
+      "text":                { "color": "${r.text}" },
+      "error":               { "color": "${a.red[0]}" },
+      "comment":             { "color": "${r.muted}", "italic": true },
+      "comment_preproc":     { "color": "${a.magenta[0]}" },
+      "keyword":             { "color": "${r.accent}" },
+      "keyword_reserved":    { "color": "${r.accent}" },
+      "keyword_namespace":   { "color": "${r.accent}" },
+      "keyword_type":        { "color": "${a.cyan[1]}" },
+      "operator":            { "color": "${a.magenta[0]}" },
+      "punctuation":         { "color": "${r.text}" },
+      "name":                { "color": "${r.text}" },
+      "name_builtin":        { "color": "${a.cyan[1]}" },
+      "name_tag":            { "color": "${r.accent}" },
+      "name_attribute":      { "color": "${a.yellow[0]}" },
+      "name_class":          { "color": "${a.yellow[1]}" },
+      "name_function":       { "color": "${a.blue[1]}" },
+      "literal_number":      { "color": "${a.red[1]}" },
+      "literal_string":      { "color": "${a.green[0]}" },
+      "literal_string_escape":{ "color": "${a.cyan[1]}" }
+    }
+  },
+  "table": {
+    "center_separator": "┼",
+    "column_separator": "│",
+    "row_separator": "─"
+  },
+  "definition_list": {},
+  "definition_term": { "color": "${r.accent}" },
+  "definition_description": { "block_prefix": "\n🠶 " }
+}
+
