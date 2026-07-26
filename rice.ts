@@ -11,6 +11,7 @@ import glowTpl from "./templates/glow.json" with { type: "text" };
 import vscodeTpl from "./templates/vscode.json" with { type: "text" };
 import vicinaeTpl from "./templates/vicinae.toml" with { type: "text" };
 import yaziTpl from "./templates/yazi.toml" with { type: "text" };
+import lazygitTpl from "./templates/lazygit.yml" with { type: "text" };
 
 // ponytail: repo path, not import.meta.dir — the compiled binary outlives its
 // build directory but still needs to read themes/ at runtime.
@@ -196,6 +197,26 @@ export function btopTheme(t: Theme): string {
     ...pairs.map(([k, v]) => `theme[${k}]="${v}"`),
     "",
   ].join("\n");
+}
+
+/** Blend two hexes. `ratio` is how much of `b` to take. */
+export function mix(a: string, b: string, ratio: number): string {
+  const ch = (i: number) => {
+    const av = parseInt(a.slice(1 + i * 2, 3 + i * 2), 16);
+    const bv = parseInt(b.slice(1 + i * 2, 3 + i * 2), 16);
+    return Math.round(av + (bv - av) * ratio).toString(16).padStart(2, "0");
+  };
+  return `#${ch(0)}${ch(1)}${ch(2)}`;
+}
+
+/** cava's 8-stop gradient, cool floor rising to a hot accent tip. */
+export function cavaGradient(t: Theme): string {
+  const r = t.roles, a = t.ansi;
+  const stops = [
+    r.overlay, a.blue[0], a.blue[1], a.cyan[1],
+    a.magenta[0], a.red[1], r.accent, mix(r.accent, a.white[1], 0.35),
+  ];
+  return ["gradient = 1", ...stops.map((c, i) => `gradient_color_${i + 1} = '${c}'`)].join("\n");
 }
 
 /** The exported shell vars sketchybarrc and its plugins read. */
@@ -391,6 +412,24 @@ export const SURFACES: Surface[] = [
       mkdirSync(join(share, "themes"), { recursive: true });
       writeFileSync(join(share, "themes", `${t.slug}.toml`), render(vicinaeTpl, t));
       return "vicinae";
+    },
+  },
+  {
+    name: "cava",
+    apply(t) {
+      const f = join(CONFIG, "cava", "config");
+      if (!existsSync(f)) return null;
+      writeFileSync(f, inject(readFileSync(f, "utf8"), cavaGradient(t)));
+      return "cava";
+    },
+  },
+  {
+    name: "lazygit",
+    apply(t) {
+      const f = join(CONFIG, "lazygit", "config.yml");
+      if (!existsSync(f)) return null;
+      writeFileSync(f, inject(readFileSync(f, "utf8"), render(lazygitTpl, t)));
+      return "lazygit";
     },
   },
 ];

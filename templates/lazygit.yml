@@ -1,0 +1,28 @@
+theme:
+  activeBorderColor:
+    - "${r.accent}"
+    - bold
+  inactiveBorderColor:
+    - "${r.muted}"
+  searchingActiveBorderColor:
+    - "${r.accent}"
+    - bold
+  optionsTextColor:
+    - "${a.blue[0]}"
+  selectedLineBgColor:
+    - "${r.surface}"
+  selectedRangeBgColor:
+    - "${r.surface}"
+  cherryPickedCommitBgColor:
+    - "${r.overlay}"
+  cherryPickedCommitFgColor:
+    - "${r.accent}"
+  markedBaseCommitBgColor:
+    - "${r.overlay}"
+  markedBaseCommitFgColor:
+    - "${a.yellow[0]}"
+  unstagedChangesColor:
+    - "${a.red[0]}"
+  defaultFgColor:
+    - "${r.text}"
+authorColorDefault: "${a.cyan[1]}"

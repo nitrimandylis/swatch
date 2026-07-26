@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME } from "./rice";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME, mix, cavaGradient } from "./rice";
 
 const GOOD = `
 [meta]
@@ -157,4 +157,18 @@ test("batman-jazz loads from disk", () => {
   const t = loadTheme("batman-jazz");
   expect(t.meta.name).toBe("Batman Jazz");
   expect(t.extras.orange).toBe("#cf8a5a");
+});
+
+test("mix blends toward the second colour", () => {
+  expect(mix("#000000", "#ffffff", 0)).toBe("#000000");
+  expect(mix("#000000", "#ffffff", 1)).toBe("#ffffff");
+  expect(mix("#000000", "#ffffff", 0.5)).toBe("#808080");
+});
+
+test("cava gradient has 8 stops rising to a lightened accent", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  const g = cavaGradient(t);
+  expect(g.match(/gradient_color_/g)).toHaveLength(8);
+  expect(g).toContain("gradient_color_7 = '#ff00aa'"); // accent
+  expect(g).not.toContain("gradient_color_8 = '#ff00aa'"); // tip is lighter than accent
 });
