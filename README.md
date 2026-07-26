@@ -86,6 +86,7 @@ skips what isn't installed.
 git clone https://github.com/nitrimandylis/swatch.git
 cd swatch
 bun run compile   # → ~/.bun/bin/swatch, and man swatch into your manpath
+swatch
 man swatch        # full reference, offline
 ```
 

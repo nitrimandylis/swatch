@@ -752,6 +752,8 @@ usage:
   swatch status [theme]        what a re-apply would change, without changing it
   swatch new <name> <image>    scaffold a theme from a wallpaper
   swatch -h, --help            this
+
+themes are read from $SWATCH_THEMES, default ~/.config/swatch/themes
 `;
 
 function slugify(name: string) {

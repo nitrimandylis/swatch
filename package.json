@@ -7,7 +7,6 @@
     "swatch": "./swatch.ts"
   },
   "scripts": {
-    "test": "bun test",
     "compile": "bun build --compile swatch.ts --outfile ~/.bun/bin/swatch && mkdir -p $(brew --prefix)/share/man/man1 && cp man/swatch.1 $(brew --prefix)/share/man/man1/"
   },
   "devDependencies": {
