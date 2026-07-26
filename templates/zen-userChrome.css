@@ -1,9 +1,19 @@
 :root {
   --zen-primary-color: ${r.accent} !important;
   --zen-colors-primary: ${r.accent} !important;
+
+  /* Zen derives the chrome from these rather than painting elements directly.
+     #zen-main-app-wrapper uses --zen-themed-toolbar-bg-transparent, which is
+     literally `transparent` in some modes — leaving it alone is what let the
+     workspace gradient show along the sides of the window. */
+  --zen-themed-toolbar-bg-transparent: ${r.base} !important;
+  --zen-main-browser-background: ${r.base} !important;
+  --zen-main-browser-background-toolbar: ${r.base} !important;
 }
 
 /* chrome matches the terminal background */
+#zen-main-app-wrapper,
+#zen-appcontent-wrapper,
 #navigator-toolbox,
 #zen-appcontent-navbar-container,
 .browserContainer {
