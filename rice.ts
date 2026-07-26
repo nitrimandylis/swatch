@@ -276,6 +276,79 @@ export function zenProfile(): string | null {
   return existsSync(dir) ? dir : null;
 }
 
+// ponytail: JSON.stringify quotes the path well enough for AppleScript; theme
+// dirs are slugs, so there are no quotes or backslashes to escape.
+const SET_PICTURE = (p: string) =>
+  `tell application "System Events" to set picture of every desktop to ${JSON.stringify(p)}`;
+
+/** Poll `check` until it holds. Returns false on timeout rather than throwing. */
+function waitFor(check: () => boolean, timeoutMs = 3000, stepMs = 100): boolean {
+  for (let waited = 0; waited < timeoutMs; waited += stepMs) {
+    if (check()) return true;
+    Bun.sleepSync(stepMs);
+  }
+  return check();
+}
+
+function focusedSpace(): number | undefined {
+  const q = Bun.spawnSync(["yabai", "-m", "query", "--spaces"]);
+  if (q.exitCode !== 0) return undefined;
+  return (JSON.parse(q.stdout.toString()) as any[]).find((s) => s["has-focus"])?.index;
+}
+
+export function currentWallpaper(): string {
+  return Bun.spawnSync([
+    "osascript", "-e", 'tell application "System Events" to get picture of desktop 1',
+  ]).stdout.toString().trim();
+}
+
+/**
+ * Set the wallpaper on every Space, not just the focused one.
+ *
+ * System Events' "desktop" means *display*, so `set picture of every desktop`
+ * touches one wallpaper per monitor and leaves the other Spaces alone — on a
+ * one-monitor machine with five Spaces that is one out of five. There is no
+ * scriptable per-Space API, so walk the Spaces with yabai and set each in turn,
+ * then put the focus back.
+ *
+ * ponytail: falls back to the focused Space when yabai isn't running, and says
+ * so rather than pretending. The alternative is writing
+ * com.apple.wallpaper/Store/Index.plist directly, which is undocumented and one
+ * macOS release away from corrupting the wallpaper store.
+ */
+export function setWallpaper(path: string): string {
+  const osa = () => {
+    const r = Bun.spawnSync(["osascript", "-e", SET_PICTURE(path)]);
+    if (r.exitCode !== 0) throw new Error(`wallpaper: ${r.stderr.toString().trim()}`);
+  };
+
+  const q = Bun.spawnSync(["yabai", "-m", "query", "--spaces"]);
+  if (q.exitCode !== 0) {
+    osa();
+    return "focused space only, yabai not running";
+  }
+
+  const spaces = JSON.parse(q.stdout.toString()) as { index: number; "has-focus": boolean }[];
+  const back = spaces.find((s) => s["has-focus"])?.index;
+  let done = 0;
+
+  for (const s of spaces) {
+    Bun.spawnSync(["yabai", "-m", "space", "--focus", String(s.index)]);
+    // Two asynchronous steps, both observable, so poll rather than sleep. The
+    // Space switch is animated, and WallpaperAgent commits the write after
+    // osascript returns — switching away before it lands silently drops it.
+    // Fixed delays looked fine and then missed two Spaces out of five.
+    if (!waitFor(() => focusedSpace() === s.index)) continue;
+    osa();
+    if (waitFor(() => currentWallpaper() === path)) done++;
+  }
+
+  if (back !== undefined) Bun.spawnSync(["yabai", "-m", "space", "--focus", String(back)]);
+  return done === spaces.length
+    ? `${done} spaces`
+    : `${done} of ${spaces.length} spaces — rerun to catch the rest`;
+}
+
 export const SURFACES: Surface[] = [
   {
     name: "ghostty",
@@ -321,22 +394,12 @@ export const SURFACES: Surface[] = [
     apply(t) {
       const file = readdirSync(t.dir).find((f) => f.startsWith("wallpaper."));
       if (!file) return null;
-      // ponytail: JSON.stringify quotes the path well enough for AppleScript;
-      // theme dirs are slugs, so no quotes or backslashes to escape.
       const want = join(t.dir, file);
       if (CHECK) {
-        const now = Bun.spawnSync([
-          "osascript", "-e", 'tell application "System Events" to get picture of desktop 1',
-        ]).stdout.toString().trim();
-        if (now !== want) PENDING.push("desktop picture");
+        if (currentWallpaper() !== want) PENDING.push("desktop picture");
         return `wallpaper (${file})`;
       }
-      // ponytail: JSON.stringify quotes the path well enough for AppleScript;
-      // theme dirs are slugs, so no quotes or backslashes to escape.
-      const script = `tell application "System Events" to set picture of every desktop to ${JSON.stringify(want)}`;
-      const r = Bun.spawnSync(["osascript", "-e", script]);
-      if (r.exitCode !== 0) throw new Error(`wallpaper: ${r.stderr.toString().trim()}`);
-      return `wallpaper (${file})`;
+      return `wallpaper (${file}, ${setWallpaper(want)})`;
     },
   },
   {
@@ -584,6 +647,23 @@ export function extractRoles(px: Px[]) {
   };
 }
 
+/**
+ * The image's real format, from sips rather than its filename. macOS ships
+ * dynamic wallpapers as HEIC files named `.jpg`, and copying one under the wrong
+ * extension stops macOS treating it as an image it understands.
+ */
+export function imageFormat(path: string): string {
+  const out = Bun.spawnSync(["sips", "-g", "format", path]).stdout.toString();
+  const fmt = out.match(/format:\s*(\w+)/)?.[1];
+  if (!fmt) throw new Error(`sips could not identify ${path}`);
+  return fmt === "jpeg" ? "jpg" : fmt;
+}
+
+/** Dynamic wallpapers carry `apple_desktop:solar` or `:h24` and change all day. */
+export function isDynamicWallpaper(path: string): boolean {
+  return Bun.spawnSync(["strings", "-a", path]).stdout.toString().includes("apple_desktop:");
+}
+
 /** Scaffold a palette.toml. Structure comes from the image, identity does not. */
 export function scaffoldPalette(name: string, variant: "dark" | "light", roles: ReturnType<typeof extractRoles>): string {
   const ref: [AnsiName, string][] = [
@@ -742,11 +822,16 @@ function main() {
     const variant = lum(bg) > 128 ? "light" : "dark";
 
     mkdirSync(dir, { recursive: true });
-    const ext = image.slice(image.lastIndexOf("."));
-    writeFileSync(join(dir, `wallpaper${ext}`), readFileSync(image));
+    writeFileSync(join(dir, `wallpaper.${imageFormat(image)}`), readFileSync(image));
     writeFileSync(join(dir, "palette.toml"), scaffoldPalette(name, variant, roles));
     console.log(`themes/${slug}/ scaffolded (${variant})`);
     for (const [k, v] of Object.entries(roles)) console.log(`  ${k.padEnd(8)} ${v}`);
+    if (isDynamicWallpaper(image))
+      console.log(
+        `\n  ! this is a dynamic wallpaper — it changes through the day, but the` +
+        `\n    palette above is sampled from one frame. Flatten it, or accept that` +
+        `\n    the colours only match at one time of day.`,
+      );
     console.log(`\n  accent is TODO — pick it by hand, then: rice use ${slug}`);
     return;
   }

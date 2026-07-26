@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME, mix, cavaGradient, zenProfile, readBmp, extractRoles, scaffoldPalette } from "./rice";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME, mix, cavaGradient, zenProfile, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper } from "./rice";
 
 const GOOD = `
 [meta]
@@ -230,4 +230,14 @@ test("scaffolded palettes are refused until the accent is chosen", () => {
   // every other role and the full ansi set must still be present
   expect(() => parseTheme("x", "/tmp", p.replace('"TODO"', '"#ff00aa"').replace("TODO: one line", "a room")))
     .not.toThrow();
+});
+
+test("imageFormat reads the real format, not the filename", () => {
+  // macOS ships dynamic wallpapers as HEIC files named .jpg
+  expect(imageFormat(`${RICE_HOME}/themes/batman-jazz/wallpaper.jpg`)).toBe("jpg");
+  expect(imageFormat(`${RICE_HOME}/themes/nord/wallpaper.png`)).toBe("png");
+});
+
+test("isDynamicWallpaper spots apple_desktop metadata", () => {
+  expect(isDynamicWallpaper(`${RICE_HOME}/themes/firewatch/wallpaper.jpg`)).toBe(false);
 });

@@ -49,6 +49,19 @@ Path to the rice repository. Defaults to \fI~/cc/rice\fR.
 .SH NOTES
 VS Code and Zen only pick up a new theme after the app restarts. Borders needs
 .BR "brew services restart borders" .
+.PP
+Each macOS Space keeps its own wallpaper, and System Events has no per-Space
+API: its "desktop" is a display. Rice therefore walks the Spaces with
+.BR yabai (1),
+setting each and restoring focus afterwards. Without yabai it sets the focused
+Space only and says so.
+.PP
+Dynamic wallpapers are HEIC files carrying \fIapple_desktop:solar\fR or
+\fI:h24\fR, often named \fI.jpg\fR.
+.B rice new
+takes the extension from
+.BR sips (1)
+and warns that one palette cannot follow a wallpaper that changes all day.
 .SH SEE ALSO
 .BR dt (1),
 .BR sips (1)

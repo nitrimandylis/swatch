@@ -65,7 +65,7 @@ app supports, not on preference.
 |---|---|---|
 | 01 | **pointer flip** | rice writes `themes/<slug>` next to the config and swaps one line to name it — ghostty, btop, glow, zed, vscode, vicinae, yazi |
 | 02 | **marker injection** | app has no theme-file support, so rice owns the block between `rice:start` and `rice:end` and leaves the rest alone — borders, cava, lazygit, zen |
-| 03 | **osascript** | the wallpaper, via `set picture of every desktop` (two displays, handled) |
+| 03 | **osascript per Space** | the wallpaper — System Events' "desktop" means *display*, so rice walks the Spaces with yabai and sets each one |
 | 04 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
 
 | | command | what it actually does |
@@ -178,6 +178,20 @@ flowchart LR
 - **Zen's live profile** is the one named by `[InstallXXX] Default=` in
   `profiles.ini`. The `Default=1` flag on a `[ProfileN]` section points at an
   empty profile here.
+- **A "desktop" in System Events is a display, not a Space.** One monitor with
+  five Spaces reports `count of desktops` = 1, so `set picture of every desktop`
+  changes exactly one wallpaper. Spaces each keep their own, in
+  `~/Library/Application Support/com.apple.wallpaper/Store/Index.plist`, keyed by
+  Space UUID. rice walks them with yabai instead of writing that store.
+- **Setting a Space's wallpaper is asynchronous at both ends.** The Space switch
+  is animated, and WallpaperAgent commits the write after `osascript` has already
+  returned. Fixed delays around those two steps looked correct and then missed
+  two Spaces out of five; rice polls `has-focus` and then `get picture of
+  desktop 1` instead.
+- **Dynamic wallpapers are HEIC files** carrying `apple_desktop:solar` or `:h24`,
+  and macOS often names them `.jpg`. `rice new` takes the extension from
+  `sips -g format` and warns, because one palette cannot track a wallpaper that
+  changes with the sun.
 
 ---
 
