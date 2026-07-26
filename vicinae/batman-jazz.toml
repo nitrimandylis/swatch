@@ -1,0 +1,48 @@
+# Batman Jazz — near-black room, steel-blue midtones, neon-pink bat-signal accent.
+# Palette from ../PALETTE.md. Only core + accents + a few overrides are set;
+# everything else Vicinae derives from these.
+
+[meta]
+version = 1
+name = "Batman Jazz"
+description = "Near-black room, steel-blue midtones, a neon-pink bat-signal accent."
+variant = "dark"
+
+[colors.core]
+background = "#09090b"            # the dark room
+foreground = "#c5d3e0"            # cool off-white
+secondary_background = "#122031"  # raised panels / walls
+border = "#294a6d"               # deep steel
+accent = "#e85a9c"               # neon-pink bat-signal
+accent_foreground = "#09090b"
+
+[colors.accents]
+blue = "#678dae"
+green = "#94b586"
+magenta = "#e85a9c"
+orange = "#cf8a5a"   # not in the image; warm lamp/crimson blend
+red = "#c85566"
+yellow = "#dcc088"
+cyan = "#67aab8"
+purple = "#b06a8f"
+
+[colors.text]
+muted = "#5f7897"          # steel-blue shadow
+danger = "#c85566"
+success = "#94b586"
+placeholder = "#5f7897"
+selection = { background = "#e85a9c", foreground = "#09090b" }
+
+[colors.input]
+border_focus = "#e85a9c"
+
+[colors.list.item.selection]
+background = "#1a2c40"           # between surface and overlay
+secondary_background = "#294a6d"
+
+[colors.grid.item]
+background = "#122031"
+
+[colors.loading]
+bar = "#e85a9c"
+spinner = "#c5d3e0"

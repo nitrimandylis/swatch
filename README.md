@@ -32,6 +32,7 @@ fastfetch + btop + cava in Ghostty. Dock auto-hidden.*
 | yazi | `~/.config/yazi/theme.toml` — palette roles across mgr/mode/status/pick/etc. Real image previews via Ghostty's kitty graphics protocol (`chafa` fallback). |
 | glow | `~/.config/glow/batman-jazz.json` (glamour style) + `glow.yml`. Headings pink, code tan-on-steel, links cyan. |
 | lazygit | `~/.config/lazygit/config.yml` — active border accent, inactive steel, surface selection, nerd icons. |
+| vicinae | [`vicinae/batman-jazz.toml`](./vicinae/batman-jazz.toml) — semantic-color theme (core + accents mapped from `PALETTE.md`). Symlinked into `~/.local/share/vicinae/themes/`, selected via `theme.dark.name` in `settings.json`. |
 
 ## TUI toolkit notes
 
