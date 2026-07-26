@@ -1,5 +1,6 @@
 .DS_Store
 node_modules/
+.env*
 
 # My screenshot rig: the Supacode pane layout and the capture checklist. Both
 # drive tools that aren't installable (juke, jazz), so they're local-only.

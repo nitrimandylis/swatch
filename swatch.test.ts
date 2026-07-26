@@ -206,13 +206,13 @@ Default=1
 
 [Profile0]
 Name=real
-Path=Profiles/bguf1cno.Default
+Path=Profiles/a1b2c3d4.Default
 
 [InstallB8A5F2C1]
-Default=Profiles/bguf1cno.Default
+Default=Profiles/a1b2c3d4.Default
 Locked=1
 `;
-  expect(zenDefaultProfile(ini)).toBe("Profiles/bguf1cno.Default");
+  expect(zenDefaultProfile(ini)).toBe("Profiles/a1b2c3d4.Default");
   expect(zenDefaultProfile("[Profile0]\nDefault=1\n")).toBeNull();
 });
 
