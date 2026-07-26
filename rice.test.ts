@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME, mix, cavaGradient } from "./rice";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, RICE_HOME, mix, cavaGradient, zenProfile } from "./rice";
 
 const GOOD = `
 [meta]
@@ -171,4 +171,14 @@ test("cava gradient has 8 stops rising to a lightened accent", () => {
   expect(g.match(/gradient_color_/g)).toHaveLength(8);
   expect(g).toContain("gradient_color_7 = '#ff00aa'"); // accent
   expect(g).not.toContain("gradient_color_8 = '#ff00aa'"); // tip is lighter than accent
+});
+
+test("inject supports paired comment delimiters for CSS", () => {
+  const css = "/* rice:start */\nold\n/* rice:end */\n";
+  const out = inject(css, ":root { color: red }", "/*", "*/");
+  expect(out).toBe("/* rice:start */\n:root { color: red }\n/* rice:end */\n");
+});
+
+test("zen profile resolution prefers the Install section over Default=1", () => {
+  expect(zenProfile()).toContain("bguf1cno");
 });

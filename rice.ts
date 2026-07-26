@@ -12,6 +12,7 @@ import vscodeTpl from "./templates/vscode.json" with { type: "text" };
 import vicinaeTpl from "./templates/vicinae.toml" with { type: "text" };
 import yaziTpl from "./templates/yazi.toml" with { type: "text" };
 import lazygitTpl from "./templates/lazygit.yml" with { type: "text" };
+import zenCssTpl from "./templates/zen-userChrome.css" with { type: "text" };
 
 // ponytail: repo path, not import.meta.dir — the compiled binary outlives its
 // build directory but still needs to read themes/ at runtime.
@@ -124,9 +125,10 @@ export function replaceInBlock(text: string, key: string, re: RegExp, line: stri
  * Body lines inherit the start marker's indentation, which YAML needs and the
  * bash arrays look better for.
  */
-export function inject(text: string, body: string, comment = "#"): string {
-  const START = `${comment} rice:start`;
-  const END = `${comment} rice:end`;
+export function inject(text: string, body: string, comment = "#", close = ""): string {
+  const tail = close ? ` ${close}` : "";
+  const START = `${comment} rice:start${tail}`;
+  const END = `${comment} rice:end${tail}`;
   const i = text.indexOf(START);
   const j = text.indexOf(END);
   if (i === -1 || j === -1 || j < i) throw new Error(`missing "${START}" / "${END}" markers`);
@@ -235,6 +237,22 @@ export function sketchybarColors(t: Theme): string {
     `export ON_FILL=${argb(r.on_fill)}`,
     `export TRANSPARENT=0x00000000`,
   ].join("\n");
+}
+
+/**
+ * Zen's live profile directory, or null if Zen isn't installed.
+ * The `[InstallXXX] Default=` key is the profile Zen actually launches. The
+ * `Default=1` flag under a `[ProfileN]` section can point somewhere else
+ * entirely — here it names an empty profile with no chrome/ directory.
+ */
+export function zenProfile(): string | null {
+  const root = join(homedir(), "Library", "Application Support", "zen");
+  const ini = join(root, "profiles.ini");
+  if (!existsSync(ini)) return null;
+  const rel = readFileSync(ini, "utf8").match(/^\[Install[^\]]*\][^[]*?^Default=(.+)$/m)?.[1];
+  if (!rel) return null;
+  const dir = join(root, rel.trim());
+  return existsSync(dir) ? dir : null;
 }
 
 export const SURFACES: Surface[] = [
@@ -430,6 +448,29 @@ export const SURFACES: Surface[] = [
       if (!existsSync(f)) return null;
       writeFileSync(f, inject(readFileSync(f, "utf8"), render(lazygitTpl, t)));
       return "lazygit";
+    },
+  },
+  {
+    name: "zen",
+    apply(t) {
+      const dir = zenProfile();
+      if (!dir) return null;
+      const js = join(dir, "user.js");
+      const css = join(dir, "chrome", "userChrome.css");
+      if (!existsSync(js) || !existsSync(css)) return null;
+      writeFileSync(
+        js,
+        inject(
+          readFileSync(js, "utf8"),
+          `user_pref("zen.theme.accent-color", "${t.roles.accent}");`,
+          "//",
+        ),
+      );
+      writeFileSync(
+        css,
+        inject(readFileSync(css, "utf8"), render(zenCssTpl, t), "/*", "*/"),
+      );
+      return "zen (restart Zen to pick it up)";
     },
   },
 ];
