@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { parseTheme, isHex, loadTheme, listThemes } from "./rice";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme } from "./rice";
 
 const GOOD = `
 [meta]
@@ -55,6 +55,30 @@ test("refuses a bad ansi pair", () => {
 
 test("refuses a bad variant", () => {
   expect(() => parseTheme("t", "/tmp", GOOD.replace('variant = "dark"', 'variant = "neon"'))).toThrow(/variant/);
+});
+
+test("replaceLine swaps exactly one line", () => {
+  const cfg = "a = 1\ntheme = old\nb = 2\n";
+  expect(replaceLine(cfg, /^theme = .*$/, "theme = new")).toBe("a = 1\ntheme = new\nb = 2\n");
+});
+
+test("replaceLine refuses zero or many matches", () => {
+  expect(() => replaceLine("a = 1\n", /^theme = .*$/, "theme = new")).toThrow(/found 0/);
+  expect(() => replaceLine("theme = x\ntheme = y\n", /^theme = .*$/, "theme = new")).toThrow(/found 2/);
+});
+
+test("replaceLine keeps $& literal", () => {
+  expect(replaceLine("theme = old\n", /^theme = .*$/, "theme = a$&b")).toBe("theme = a$&b\n");
+});
+
+test("ghostty theme uses bare hex and orders palette normals then brights", () => {
+  const g = ghosttyTheme(parseTheme("test", "/tmp", GOOD));
+  expect(g).toContain("background = 000000");
+  expect(g).toContain("cursor-text = 000000"); // on_fill, not base by luck
+  expect(g).toContain("background-opacity = 0.92");
+  expect(g).toContain("palette = 6=#4a8f9e"); // cyan normal
+  expect(g).toContain("palette = 14=#67aab8"); // cyan bright
+  expect(g).not.toContain("theme ="); // banned inside a ghostty theme file
 });
 
 test("batman-jazz loads from disk", () => {
