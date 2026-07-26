@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { readdirSync, existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, basename } from "node:path";
 import { homedir } from "node:os";
 
 // Colour documents live in templates/ rather than in this file: they are long,
@@ -835,7 +835,8 @@ usage:
   swatch use <theme>           apply a theme to every surface
   swatch use <theme> --pick N  ...with wallpaper N, skipping the menu
   swatch status [theme]        what a re-apply would change, without changing it
-  swatch new <name> <image>    scaffold a theme from a wallpaper
+  swatch new <name> <image>... scaffold a theme; the palette comes from the first
+  swatch add <theme> <image>.. copy more wallpapers in ("-" reads paths from stdin)
   swatch -h, --help            this
 
 a theme with several wallpapers opens an fzf menu; --pick takes a number from
@@ -847,6 +848,39 @@ themes are read from $SWATCH_THEMES, default ~/.config/swatch/themes
 
 function slugify(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/** Structural roles for one image, via sips and a BMP. */
+function sampleRoles(image: string) {
+  const bmp = join("/tmp", "swatch-sample.bmp");
+  const r = Bun.spawnSync(["sips", "-s", "format", "bmp", "-Z", "96", image, "--out", bmp]);
+  if (r.exitCode !== 0) throw new Error(`sips: ${r.stderr.toString().trim()}`);
+  return extractRoles(readBmp(readFileSync(bmp).buffer as ArrayBuffer));
+}
+
+/**
+ * Copy images into a theme's pool, returning the names they landed under.
+ *
+ * The filename is the handle — it is what the fzf menu shows and what
+ * `--pick aurora.png` matches — so it is kept rather than normalised to an
+ * index. A collision is an error rather than an auto-suffix: adding the same
+ * picture twice is something you should hear about, not something that quietly
+ * leaves you with x.png and x-2.png and no idea which is which.
+ */
+function addToPool(dir: string, images: string[]): string[] {
+  for (const img of images) if (!existsSync(img)) throw new Error(`no such image: ${img}`);
+  const wp = join(dir, "wallpapers");
+  mkdirSync(wp, { recursive: true });
+  return images.map((img) => {
+    // The extension comes from sips, not the path: macOS ships dynamic
+    // wallpapers as HEIC files named .jpg, and copying one under the wrong
+    // extension stops macOS treating it as an image it understands.
+    const name = `${basename(img).replace(/\.[^.]+$/, "")}.${imageFormat(img)}`;
+    const dest = join(wp, name);
+    if (existsSync(dest)) throw new Error(`${name} is already in this theme`);
+    writeFileSync(dest, readFileSync(img));
+    return name;
+  });
 }
 
 /** ponytail: one flag in the whole CLI, so this is the arg parser. */
@@ -928,33 +962,71 @@ function main() {
   }
 
   if (cmd === "new") {
-    const [name, image] = args;
-    if (!name || !image) throw new Error("usage: swatch new <name> <image>");
-    if (!existsSync(image)) throw new Error(`no such image: ${image}`);
+    const [name, ...images] = args;
+    if (!name || !images.length) throw new Error("usage: swatch new <name> <image>...");
     const slug = slugify(name);
     const dir = join(themesDir(), slug);
     if (existsSync(dir)) throw new Error(`theme "${slug}" already exists`);
+    const first = images[0]!;
+    if (!existsSync(first)) throw new Error(`no such image: ${first}`);
 
-    const bmp = join("/tmp", `swatch-${slug}.bmp`);
-    const r = Bun.spawnSync(["sips", "-s", "format", "bmp", "-Z", "96", image, "--out", bmp]);
-    if (r.exitCode !== 0) throw new Error(`sips: ${r.stderr.toString().trim()}`);
-    const px = readBmp(readFileSync(bmp).buffer as ArrayBuffer);
-    const roles = extractRoles(px);
+    // The palette comes from the first image alone. The rest are moods inside
+    // the same theme, not competing sources for what the theme is; averaging
+    // them would produce a palette matching none of them.
+    const roles = sampleRoles(first);
     const bg = { r: parseInt(roles.base.slice(1, 3), 16), g: parseInt(roles.base.slice(3, 5), 16), b: parseInt(roles.base.slice(5, 7), 16) };
     const variant = lum(bg) > 128 ? "light" : "dark";
 
     mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, `wallpaper.${imageFormat(image)}`), readFileSync(image));
+    const added = addToPool(dir, images);
     writeFileSync(join(dir, "palette.toml"), scaffoldPalette(name, variant, roles));
-    console.log(`themes/${slug}/ scaffolded (${variant})`);
+    console.log(`themes/${slug}/ scaffolded (${variant}, ${added.length} wallpaper${added.length === 1 ? "" : "s"})`);
     for (const [k, v] of Object.entries(roles)) console.log(`  ${k.padEnd(8)} ${v}`);
-    if (isDynamicWallpaper(image))
+    for (const img of images.filter(isDynamicWallpaper))
       console.log(
-        `\n  ! this is a dynamic wallpaper — it changes through the day, but the` +
-        `\n    palette above is sampled from one frame. Flatten it, or accept that` +
-        `\n    the colours only match at one time of day.`,
+        `\n  ! ${basename(img)} is a dynamic wallpaper — it changes through the day,` +
+        `\n    but the palette above is sampled from one frame. Flatten it, or accept` +
+        `\n    that the colours only match at one time of day.`,
       );
     console.log(`\n  accent is TODO — pick it by hand, then: swatch use ${slug}`);
+    return;
+  }
+
+  if (cmd === "add") {
+    const [slug, ...rest] = args;
+    if (!slug || !rest.length) throw new Error("usage: swatch add <theme> <image>... | -");
+    const dir = join(themesDir(), slug);
+    if (!existsSync(join(dir, "palette.toml")))
+      throw new Error(`no theme "${slug}" — start one with: swatch new ${slug} <image>`);
+
+    // `-` reads paths from stdin, which is how you hand it an interactive
+    // selection without swatch learning what your wallpaper collection is:
+    //   fzf -m --preview 'chafa {}' | swatch add nord -
+    // Split on newlines, never on whitespace — wallpaper filenames have spaces
+    // in them and $(fzf -m) would shred "Desktop Wallpaper 1.jpg" into three.
+    const images =
+      rest[0] === "-"
+        ? readFileSync(0, "utf8").split("\n").map((s) => s.trim()).filter(Boolean)
+        : rest;
+    if (!images.length) throw new Error("no paths on stdin");
+
+    const added = addToPool(dir, images);
+    console.log(`${slug}: ${added.length} added, ${pool(dir).length} in the pool\n`);
+    // `add` trusts your grouping, but shows its work: the palette the theme
+    // claims, above what each new picture is actually made of. A picture in the
+    // wrong theme is obvious here and invisible until the desktop otherwise.
+    console.log(`  ${"".padEnd(30)}base    surface text`);
+    try {
+      const t = loadTheme(slug);
+      console.log(`  ${"palette.toml".padEnd(30)}${t.roles.base} ${t.roles.surface} ${t.roles.text}`);
+    } catch {
+      // Unfinished theme, nothing to compare against yet. Not an error: `add`
+      // is how you fill one out.
+    }
+    for (const n of added) {
+      const r = sampleRoles(join(dir, "wallpapers", n));
+      console.log(`  ${n.slice(0, 29).padEnd(30)}${r.base} ${r.surface} ${r.text}`);
+    }
     return;
   }
 
