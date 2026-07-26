@@ -398,6 +398,42 @@ export function setWallpaper(path: string): string {
     : `${done} of ${spaces.length} spaces — rerun to catch the rest`;
 }
 
+/**
+ * Can a menu be drawn right now? Two separate questions — fzf installed, and a
+ * terminal to draw on — and a cron job or a pipe fails the second while passing
+ * the first. Callers fall back to the sticky default rather than erroring: a
+ * theme that refuses to apply because a menu could not open is worse than one
+ * that picks the obvious wallpaper.
+ */
+export function canPick(): boolean {
+  return Boolean(process.stdout.isTTY && Bun.which("fzf"));
+}
+
+/**
+ * Choose from a theme's wallpapers with fzf, previewed as actual images when
+ * chafa is around. Returns null when the user escapes.
+ *
+ * fzf reads its candidates from stdin but its keystrokes straight from /dev/tty,
+ * which is why piping the list in still leaves it interactive. Running it inside
+ * wallpapers/ means the preview command can use the bare filename fzf hands it.
+ */
+export function pickWallpaper(dir: string, files: string[]): string | null {
+  const wp = join(dir, "wallpapers");
+  const preview = Bun.which("chafa")
+    ? ["--preview", "chafa -s ${FZF_PREVIEW_COLUMNS}x${FZF_PREVIEW_LINES} {}", "--preview-window", "right:60%"]
+    : [];
+  const r = Bun.spawnSync({
+    cmd: ["fzf", "--prompt", "wallpaper> ", "--height", "80%", "--no-multi", ...preview],
+    cwd: wp,
+    stdin: Buffer.from(files.join("\n")),
+    stdout: "pipe",
+    stderr: "inherit",
+  });
+  // Any non-zero exit is a refusal: escape, ctrl-c, or no match. All mean the
+  // same thing to the caller, which is "do not touch anything".
+  return r.exitCode === 0 ? r.stdout.toString().trim() || null : null;
+}
+
 export const SURFACES: Surface[] = [
   {
     name: "ghostty",
@@ -797,15 +833,29 @@ const HELP = `swatch — switch the whole desktop to a theme
 usage:
   swatch list                  show available themes
   swatch use <theme>           apply a theme to every surface
+  swatch use <theme> --pick N  ...with wallpaper N, skipping the menu
   swatch status [theme]        what a re-apply would change, without changing it
   swatch new <name> <image>    scaffold a theme from a wallpaper
   swatch -h, --help            this
+
+a theme with several wallpapers opens an fzf menu; --pick takes a number from
+"swatch list <theme>" or a filename. with no terminal it keeps the one already
+up, or takes the first.
 
 themes are read from $SWATCH_THEMES, default ~/.config/swatch/themes
 `;
 
 function slugify(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/** ponytail: one flag in the whole CLI, so this is the arg parser. */
+function flag(args: string[], name: string): string | undefined {
+  const i = args.indexOf(name);
+  if (i === -1) return undefined;
+  const v = args[i + 1];
+  if (!v) throw new Error(`${name} needs a value`);
+  return v;
 }
 
 function main() {
@@ -835,8 +885,21 @@ function main() {
 
   if (cmd === "use") {
     const [slug] = args;
-    if (!slug) throw new Error("usage: swatch use <theme>");
+    if (!slug) throw new Error("usage: swatch use <theme> [--pick <n|name>]");
     const t = loadTheme(slug);
+
+    // Settle the wallpaper before a single surface runs. `use` rewrites six
+    // configs, reloads sketchybar and reconfigures a live borders instance, so
+    // the one cancellable moment has to come before any of that: escaping the
+    // menu leaves the machine exactly as it was.
+    const files = pool(t.dir);
+    const pick = flag(args, "--pick");
+    if (pick) PICKED = resolvePick(pick, files);
+    else if (files.length > 1 && canPick()) {
+      PICKED = pickWallpaper(t.dir, files) ?? undefined;
+      if (!PICKED) return console.log("aborted, nothing changed");
+    }
+
     console.log(t.meta.name);
     for (const s of SURFACES) {
       const done = s.apply(t);
