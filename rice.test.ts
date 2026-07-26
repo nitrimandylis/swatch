@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb } from "./rice";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, yaziFlavor } from "./rice";
 
 const GOOD = `
 [meta]
@@ -106,6 +106,19 @@ test("inject is idempotent", () => {
 
 test("inject refuses a file without markers", () => {
   expect(() => inject("options=()\n", "a=1")).toThrow(/markers/);
+});
+
+test("sketchybar exports every var the plugins read", () => {
+  const s = sketchybarColors(parseTheme("test", "/tmp", GOOD));
+  for (const v of ["BASE", "BAR_BG", "SURFACE", "OVERLAY", "TEXT", "MUTED", "ACCENT", "DEEP", "RED", "ON_FILL", "TRANSPARENT"])
+    expect(s).toContain(`export ${v}=0x`);
+});
+
+test("yazi flavor is valid TOML with no leftover literals", () => {
+  const f = yaziFlavor(parseTheme("test", "/tmp", GOOD));
+  const parsed = Bun.TOML.parse(f) as any;
+  expect(parsed.mode.normal_main.bg).toBe("#ff00aa");
+  expect(f).not.toContain("#e85a9c"); // no hardcoded Batman Jazz hex left behind
 });
 
 test("batman-jazz loads from disk", () => {
