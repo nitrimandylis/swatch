@@ -9,7 +9,7 @@
 
 <div align="center">
 
-### `ONE PALETTE // TWELVE SURFACES // ONE COMMAND`
+### `ONE PALETTE // THIRTEEN SURFACES // ONE COMMAND`
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
@@ -59,7 +59,7 @@ Batman Jazz
 
 ## 🔧 The surfaces
 
-Three mechanisms cover everything. Which one a surface gets depends on what the
+Four mechanisms cover everything. Which one a surface gets depends on what the
 app supports, not on preference.
 
 | | mechanism | what it actually does |
