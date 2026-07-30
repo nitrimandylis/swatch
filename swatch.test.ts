@@ -193,11 +193,12 @@ test("every template renders to a parseable document", () => {
     expect(() => Bun.TOML.parse(render(readFileSync(join(HERE, "templates", f), "utf8"), t))).not.toThrow();
 });
 
-test("the notion stylesheet fills the semantic core without mistaking AccPri for the accent", () => {
+test("the web stylesheet fills each site's semantic core", () => {
   const t = parseTheme("test", "/tmp", GOOD);
-  const css = render(readFileSync(join(HERE, "templates", "notion-userContent.css"), "utf8"), t);
+  const css = render(readFileSync(join(HERE, "templates", "web-userContent.css"), "utf8"), t);
   expect(css).not.toContain("${");
 
+  // --- notion ---
   // Notion's --c-*AccPri is a neutral emphasis step, not a brand accent: in
   // light mode --c-texAccPri ships as #5f5e59, a grey. Putting roles.accent
   // here turns every sidebar label the accent colour.
@@ -215,17 +216,18 @@ test("the notion stylesheet fills the semantic core without mistaking AccPri for
   expect(css).not.toContain("--c-texSec: #888888"); // roles.muted
   expect(css).toContain("--c-texTer: #888888 !important;");
 
-  // userContent.css is a user-origin sheet, which loses to author styles for
-  // normal declarations. Every declaration needs !important or Notion's own
-  // rules win — and it fails as a partial success (accent lands, backgrounds
-  // do not), which reads like a mapping bug rather than a cascade one.
-  const decls = css.match(/--c-[A-Za-z0-9]+:[^;]+;/g) ?? [];
-  expect(decls.length).toBeGreaterThan(20);
-  expect(decls.filter((d) => !d.includes("!important"))).toEqual([]);
-
   // <body> paints a literal no variable reaches. Without this rule a quarter of
   // the painted area stays Notion grey while every variable reads correct.
   expect(css).toMatch(/body\.notion-body \{\n\s+background-color: #000000 !important;/);
+
+  // --- every block ---
+  // userContent.css is a user-origin sheet, which loses to author styles for
+  // normal declarations. Every declaration needs !important or the site's own
+  // rules win — and it fails as a partial success (accent lands, backgrounds
+  // do not), which reads like a mapping bug rather than a cascade one.
+  const decls = css.match(/^\s+--[A-Za-z0-9-]+:[^;]+;/gm) ?? [];
+  expect(decls.length).toBeGreaterThan(20);
+  expect(decls.filter((d) => !d.includes("!important"))).toEqual([]);
 });
 
 test("a theme loads off disk", () => {
