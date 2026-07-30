@@ -174,8 +174,12 @@
      our base on html, body and ytd-app itself — and the canvas did not move.
      YouTube's own rule for it lives inside a Polymer shadow root, so it is not
      in document.styleSheets and cannot be read back to name the source.
-     ponytail: one selector, measured. Do not generalise this into more. */
-  ytd-app {
+     ytd-masthead is the same case measured separately: the top bar paints
+     #121212, and the two variables holding that colour (--ytd-searchbox-
+     background, --yt-deprecated-dark-surface-100) were set to surface with the
+     bar unchanged. */
+  ytd-app,
+  ytd-masthead {
     background-color: ${r.base} !important;
   }
 }
@@ -291,8 +295,11 @@
      the page — from a literal. All six variables holding that colour were set
      and verified applied; the search field beside it moved to overlay in the
      same pass, so the block was landing and this pane simply reads nothing.
-     ponytail: one selector, measured. Do not generalise this into more. */
-  html {
+     Both html and body, because they paint the same literal and body covers the
+     viewport: setting html alone changed no pixel while the search field beside
+     it moved, which is body painting over a correct canvas. */
+  html,
+  body {
     background-color: ${r.base} !important;
   }
 }

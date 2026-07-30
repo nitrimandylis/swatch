@@ -288,8 +288,10 @@ test("the web stylesheet fills each site's semantic core", () => {
   // by overriding every variable holding that colour and watching nothing move.
   // Same exception as Notion's body.notion-body, and the count of it is capped:
   // three element selectors in the whole sheet, one per site that needs one.
-  expect(css).toMatch(/ytd-app \{\n\s+background-color: #000000 !important;/);
-  expect(css).toMatch(/\n  html \{\n\s+background-color: #000000 !important;/);
+  expect(css).toMatch(/ytd-app,\n  ytd-masthead \{\n\s+background-color: #000000 !important;/);
+  expect(css).toMatch(/\n  html,\n  body \{\n\s+background-color: #000000 !important;/);
+  // Three declarations, not three selectors: a pane that spans two elements is
+  // still one exception. This is the number that must not creep.
   expect((css.match(/^\s+background-color:/gm) ?? []).length).toBe(3);
 
   // The canaries were a debugging aid, not a feature. They proved the blocks
