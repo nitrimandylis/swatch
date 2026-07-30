@@ -43,17 +43,19 @@ same time, which is what made the old name wrong rather than merely imprecise.
 
 ## State
 
-Working. Fourteen surfaces, 41 tests, compiled to `~/.bun/bin/swatch`. Switching
+Working. Seventeen surfaces, 44 tests, compiled to `~/.bun/bin/swatch`. Switching
 themes has been exercised end to end: Batman Jazz → Firewatch moved every
-pointer and every injected block, and `status` confirmed all fourteen installed
-surfaces back in sync.
+pointer and every injected block, and `status` confirmed every installed
+surface back in sync.
 
 | surface | mechanism |
 |---|---|
 | ghostty, btop, glow, zed, vscode, yazi | pointer flip |
+| fzf, git | generated file, static include, opt-in |
 | borders, cava, lazygit, zen | marker injection |
 | cider | key edit, no theme file |
 | icons | preferences key, macOS 26 and up |
+| highlight | preferences key |
 | wallpaper | osascript, once per Space |
 | p10k, fastfetch | free, inherit terminal ANSI |
 

@@ -9,7 +9,7 @@
 
 <div align="center">
 
-### `ONE PALETTE // THIRTEEN SURFACES // ONE COMMAND`
+### `ONE PALETTE // SEVENTEEN SURFACES // ONE COMMAND`
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
@@ -43,6 +43,7 @@ them in a repository of their own and share them without shipping the tool.
 nick@mba:~$ swatch use batman-jazz
 Batman Jazz
   ✓ ghostty (supacode reads this config; p10k + fastfetch inherit its ANSI)
+  ✓ fzf (new shells only)
   ✓ btop
   ✓ borders
   ✓ wallpaper (dusk-late.jpg, 5 spaces)
@@ -53,24 +54,27 @@ Batman Jazz
   ✓ vscode (restart VS Code to pick it up)
   ✓ cava
   ✓ lazygit
+  ✓ git
   ✓ zen (restart Zen to pick it up)
   ✓ cider
   ✓ icons
+  ✓ highlight (apps read it at launch)
 ```
 
 ## 🔧 The surfaces
 
-Five mechanisms cover everything. Which one a surface gets depends on what the
+Six mechanisms cover everything. Which one a surface gets depends on what the
 app supports, not on preference.
 
 | | mechanism | what it actually does |
 |---|---|---|
 | 01 | **pointer flip** | swatch writes a theme file next to the config and swaps one line to name it: ghostty, btop, glow, zed, vscode, yazi |
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
-| 03 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
-| 04 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
-| 05 | **preferences key** | no config file exists, the setting lives in NSGlobalDomain: the app icon tint (macOS 26 and up), written with `defaults` |
-| 06 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
+| 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections. Both are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh` or a gitconfig includes `swatch.gitconfig` |
+| 04 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
+| 05 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
+| 06 | **preferences key** | no config file exists, the setting lives in NSGlobalDomain: the app icon tint (macOS 26 and up) and the system highlight colour, written with `defaults` |
+| 07 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
 
 | | command | what it actually does |
 |---|---|---|
@@ -85,6 +89,16 @@ Swatch refuses to apply any palette containing the string `TODO`.
 
 Needs [Bun](https://bun.sh) and macOS. Every themed app is optional, swatch
 skips what isn't installed.
+
+Two surfaces are opt-in, because neither app has a config file whose existence
+would prove you want it themed. Set them up once and swatch keeps them current:
+
+```bash
+mkdir -p ~/.config/fzf   # then, in your shell rc:
+#   [ -s "$HOME/.config/fzf/colors.sh" ] && source "$HOME/.config/fzf/colors.sh"
+
+git config --global include.path '~/.config/git/swatch.gitconfig'
+```
 
 ```bash
 git clone https://github.com/nitrimandylis/swatch.git

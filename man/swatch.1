@@ -93,11 +93,31 @@ API: its "desktop" is a display. Swatch therefore walks the Spaces with
 setting each and restoring focus afterwards. Without yabai it sets the focused
 Space only and says so.
 .PP
+Two surfaces are opt-in, because neither app keeps a config file whose presence
+would mean "theme me". Swatch writes
+\fI~/.config/fzf/colors.sh\fR only when
+\fI~/.config/fzf\fR exists, and
+\fI~/.config/git/swatch.gitconfig\fR only when a gitconfig already includes it:
+.IP
+.EX
+mkdir \-p ~/.config/fzf
+# in your shell rc: source ~/.config/fzf/colors.sh
+git config \-\-global include.path '~/.config/git/swatch.gitconfig'
+.EE
+.PP
+The fzf colours reach a shell the next time it starts, not the one that ran
+.BR swatch (1).
+.PP
 On macOS 26 and later swatch also tints every app icon with the palette accent,
 by writing the icon appearance keys in NSGlobalDomain and then asking SkyLight to
 apply them, which is what makes the Dock re-render. No icon file is touched, and
 .B "System Settings > Appearance"
 puts it back. Earlier releases have no such setting and the surface is skipped.
+.PP
+The system highlight colour behind selected text is set the same way, through
+\fBAppleHighlightColor\fR, which takes an arbitrary colour \(em unlike
+\fBAppleAccentColor\fR, an eight-value enum with no custom slot, which swatch
+leaves alone. Running apps keep the old colour until they are relaunched.
 .PP
 Dynamic wallpapers are HEIC files carrying \fIapple_desktop:solar\fR or
 \fI:h24\fR, often named \fI.jpg\fR.

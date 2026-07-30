@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -112,6 +112,27 @@ test("tintColor is sRGB floats at six decimals", () => {
   // drift on a correct setting forever.
   expect(tintColor("#ff1f6b")).toBe("1.000000 0.121569 0.419608 1.000000");
   expect(tintColor("#000000")).toBe("0.000000 0.000000 0.000000 1.000000");
+});
+
+test("highlightColor keeps the name macOS prints under the swatch", () => {
+  expect(highlightColor("#ff1f6b", "Spider Verse")).toBe("1.000000 0.121569 0.419608 Spider Verse");
+});
+
+test("fzf leaves the background to the terminal", () => {
+  const s = fzfColors(parseTheme("test", "/tmp", GOOD));
+  // An opaque bg here would paint over ghostty's transparency.
+  expect(s).toContain("bg:-1");
+  expect(s).toContain("gutter:-1");
+  expect(s).toContain("pointer:#ff00aa");
+  // Appends, so --height set in a shell rc survives.
+  expect(s).toContain('"${FZF_DEFAULT_OPTS:-} --color=');
+});
+
+test("git quotes every hex, because # opens a comment", () => {
+  const s = gitColors(parseTheme("test", "/tmp", GOOD));
+  expect(s).toContain('[color "diff"]');
+  expect(s).toContain('\tfrag = "#ff00aa"');
+  expect(s).not.toMatch(/= #/);
 });
 
 test("inject replaces the marked block and keeps indentation", () => {
