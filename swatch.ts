@@ -346,8 +346,6 @@ const CIDER = join(homedir(), "Library", "Application Support", "sh.cider.genten
  * `appearance` and the tint already colour, looks better anyway.
  * The flags matter as much as the values: Cider ignores a custom accent unless
  * `useSystemAccentColor` is off and `customAccentColor` is on.
- * ponytail: no custom CSS. Restyling an Electron SPA means selectors that rot
- * silently on every Cider release, and `status` can only see changed lines.
  */
 export function ciderConfig(text: string, t: Theme): string {
   let out = replaceLine(text, /^  appearance: .*$/, `  appearance: ${t.meta.variant}`);
@@ -360,7 +358,59 @@ export function ciderConfig(text: string, t: Theme): string {
   );
   // AMProgressBar. Off by default, which is why the accent shows up almost
   // nowhere until you turn it on.
-  return replaceLine(out, /^    useAccentColor: .*$/, `    useAccentColor: true`);
+  out = replaceLine(out, /^    useAccentColor: .*$/, `    useAccentColor: true`);
+  // Unquoted and space-free, or Cider rewrites it and `status` never goes green.
+  const css = ciderCss(t);
+  if (/\s/.test(css)) throw new Error("cider CSS must not contain whitespace");
+  // The match has to swallow the fold. If Cider last wrote a long value it sits
+  // across several lines, and replacing only the first one leaves the rest of the
+  // old CSS behind, glued to the end of the new value. `status` cannot catch that:
+  // the leftovers are in both the file and what swatch would write, so it reports
+  // in sync while the live value is two stylesheets deep. Any line indented past
+  // the key belongs to it; a sibling key is back at two spaces.
+  return replaceLine(out, /^  customCSS: .*(\n {4,}.*)*$/, `  customCSS: ${css}`);
+}
+
+/**
+ * The hover and pressed states of the accent, which Cider derives from nothing.
+ * `--keyColor` is set on `document.body` from the config and reaches 310 rules,
+ * but `--keyColor-rollover` and friends are hardcoded Apple Music red in Cider's
+ * own stylesheet and no code ever updates them. So a button sits at your accent
+ * and flashes #ff5f7a the moment you touch it — invisible on a red palette,
+ * wrong on every other one.
+ *
+ * Variables only, no element selectors: the same rule as Zen. Cider's markup can
+ * change freely underneath this and the worst case is that a variable stops
+ * being read, never that the app is painted wrong.
+ * Written to match Cider's YAML writer byte for byte, because it re-serialises
+ * this file from memory and anything else reports drift forever. Two rules, both
+ * learned the hard way: the value goes in **unquoted**, since Cider emits a plain
+ * scalar, and the string contains **no spaces at all**, since Cider folds plain
+ * scalars at 80 columns and folding can only break at a space. That is why the
+ * rgb triplets are `255,42,42` rather than CSS's usual `255, 42, 42`.
+ */
+export function ciderCss(t: Theme): string {
+  const a = t.roles.accent;
+  const rollover = mix(a, "#ffffff", 0.2);
+  const pressed = mix(a, "#ffffff", 0.1);
+  // Cider's own selectors. `body.body--dark` is (0,1,1), so a `:root` block would
+  // lose to it and the derivatives would stay Apple red.
+  return (
+    `body,body.body--dark,body.body--light{` +
+    `--keyColor-rgb:${rgbTriplet(a)};` +
+    `--keyColor-rollover:${rollover};--keyColor-rollover-rgb:${rgbTriplet(rollover)};` +
+    `--keyColor-pressed:${pressed};--keyColor-pressed-rgb:${rgbTriplet(pressed)};` +
+    `--keyColor-deepPressed:${t.roles.deep};--keyColor-deepPressed-rgb:${rgbTriplet(t.roles.deep)};` +
+    `--keyColor-disabled:rgba(${rgbTriplet(a)},.35)}`
+  );
+}
+
+/**
+ * `#ff2a2a` → `255,42,42`. No spaces, deliberately: see ciderCss. CSS does not
+ * care, and YAML folds plain scalars only at spaces.
+ */
+export function rgbTriplet(hex: string): string {
+  return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(",");
 }
 
 const ciderRunning = () => Bun.spawnSync(["pgrep", "-x", "Cider"]).exitCode === 0;

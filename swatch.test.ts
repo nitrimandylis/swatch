@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -225,7 +225,6 @@ const CIDER_CFG = `visual:
     src: ""
     filter:
       blur: 128
-  customCSS: ""
   ui_custom:
     useSystemAccentColor: true
     customAccentColor: false
@@ -237,6 +236,7 @@ components:
   AMProgressBar:
     iOSStyle: true
     useAccentColor: false
+  customCSS: ""
 connectivity:
   parties:
     enabled: true
@@ -251,10 +251,45 @@ test("ciderConfig sets every key Cider needs to take a colour from us", () => {
   expect(out).toContain('    customAccentColorValue: "#ff00aa"\n');
   expect(out).toContain("    customTintColor: false\n"); // the UI-wide tint stays off
   expect(out).toContain("    useAccentColor: true\n");
+  // One line, double-quoted, so Cider's own re-serialisation matches it.
+  expect(out).toContain("  customCSS: body,body.body--dark");
+  expect(out.split("\n").filter((l) => l.startsWith("  customCSS:"))).toHaveLength(1);
   expect(out).toContain('    customTintColorValue: "#fa2d48"\n'); // not ours
   expect(out).toContain("    customTintColorRatio: 0.5\n"); // the user's, left alone
   // Cider's own background stays Cider's: swatch colours it, never replaces it.
   expect(out).toContain("    enabled: false\n    src: \"\"\n");
+});
+
+test("rgbTriplet matches how Cider writes its *-rgb variables", () => {
+  expect(rgbTriplet("#ff2a2a")).toBe("255,42,42");
+  expect(rgbTriplet("#000000")).toBe("0,0,0");
+});
+
+test("ciderCss overrides the accent states Cider hardcodes to Apple red", () => {
+  const css = ciderCss(parseTheme("test", "/tmp", GOOD));
+  // Cider's own specificity: body.body--dark beats :root, so we must match it.
+  expect(css.startsWith("body,body.body--dark,body.body--light{")).toBe(true);
+  for (const v of ["rollover", "pressed", "deepPressed", "disabled", "rgb"])
+    expect(css).toContain(`--keyColor-${v}:`);
+  expect(css).toContain("--keyColor-deepPressed:#8f2a3a"); // deep
+  expect(css).toContain("--keyColor-disabled:rgba(255,0,170,.35)");
+  expect(css).not.toContain("fa2d48"); // no Apple red left anywhere
+  // Any whitespace at all lets Cider's YAML writer fold the line at 80 columns,
+  // which reports drift on every status forever after.
+  expect(css).not.toMatch(/\s/);
+});
+
+test("ciderConfig replaces a folded customCSS whole, not just its first line", () => {
+  // What Cider leaves behind after re-serialising a long value: a plain scalar
+  // folded at 80 columns onto continuation lines.
+  const folded = CIDER_CFG.replace(
+    '  customCSS: ""',
+    "  customCSS: body,body.body--dark{--keyColor-rollover:#old;--keyColor-pressed:#old2;\n    --keyColor-deepPressed:#old3}",
+  );
+  const out = ciderConfig(folded, parseTheme("test", "/tmp", GOOD));
+  expect(out).not.toContain("#old");
+  expect(out).toContain("\nconnectivity:"); // the next key survived
+  expect(out.split("\n").filter((l) => l.startsWith("  customCSS:"))).toHaveLength(1);
 });
 
 test("ciderConfig fails loudly if Cider renames a key", () => {

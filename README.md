@@ -66,7 +66,7 @@ app supports, not on preference.
 |---|---|---|
 | 01 | **pointer flip** | swatch writes a theme file next to the config and swaps one line to name it: ghostty, btop, glow, zed, vscode, yazi |
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
-| 03 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour: cider |
+| 03 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
 | 04 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
 | 05 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
 
@@ -214,6 +214,22 @@ flowchart LR
   and tells you to quit and reopen. Cider also needs `useSystemAccentColor:
   false` and `customAccentColor: true` set, or the accent it is given is
   ignored, which is why the surface writes flags as well as colours.
+- **Cider's accent has no hover state.** `--keyColor` is set on `document.body`
+  from `customAccentColorValue` and reaches 310 rules, but `--keyColor-rollover`,
+  `-pressed`, `-deepPressed` and `-disabled` are hardcoded Apple Music red in
+  Cider's stylesheet and no code ever derives them. Untouched, a button sits at
+  your accent and flashes `#ff5f7a` when you hover it — invisible on a red
+  palette, wrong on every other one. Swatch overrides the five of them in
+  `visual.customCSS`, variables only, at Cider's own `body.body--dark`
+  specificity, since a `:root` block would lose to it.
+- **Write that CSS the way Cider's YAML writer would, or `status` never goes
+  green.** It emits a plain unquoted scalar and folds it at 80 columns, and
+  folding breaks at spaces — so the value swatch writes is unquoted and contains
+  no whitespace at all, which is why the rgb triplets are `255,42,42`. The line
+  match also has to swallow the fold: replacing only the first physical line of
+  a wrapped value leaves the rest of the old CSS glued to the end of the new one,
+  and `status` cannot see it, because the leftovers are in both the file and what
+  swatch would write.
 - **Cider's background stays Cider's.** `backgroundBlurMap.src` can be pointed
   at the theme's wallpaper, and it works, but Cider re-serialises the path
   without quotes while swatch writes it with them, so `status` then reports
