@@ -47,7 +47,10 @@ Working. Eighteen surfaces, 45 tests, compiled to `~/.bun/bin/swatch`. Switching
 themes has been exercised end to end: Batman Jazz → Firewatch moved every
 pointer and every injected block, and `status` confirmed every installed
 surface back in sync. Notion was verified separately by sampling pixels in Zen:
-`#0d0a1e` content background against a spider-verse `base` of `#0d0a1e`.
+`#0d0a1e` content background against a spider-verse `base` of `#0d0a1e`. Every
+web site is verified that way, on pixels rather than on sight — YouTube's chip
+row passed a look and measured `#0f0e12`, a stock layer the top bar was hiding
+half of.
 
 | surface | mechanism |
 |---|---|

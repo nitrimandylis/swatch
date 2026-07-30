@@ -246,6 +246,26 @@ flowchart LR
   nothing about the origin that actually matters. Notion's variable map was
   worked out that way and every one of those findings held; the cascade bug
   only appeared in the real browser. Screenshot it and sample the pixels.
+- **A site block fails silently in two different ways, and they look identical.**
+  Either the variable name is dead — YouTube's `--yt-spec-*` family is extinct
+  and GitHub's legacy `--color-canvas-*` resolve to the empty string — or the
+  name is live and correct and *nothing reads it*, because the pixel you are
+  looking at comes from a literal further down. Both apply cleanly and change
+  nothing. The second one is why the sheet carries five `background`
+  declarations on named elements, one per pane that no variable reaches, and why
+  a test pins that number: it is an exception, not a technique. YouTube's
+  `#frosted-glass` is the clearest case — a fixed full-width layer at
+  `rgba(15,15,15,0.8)`, hidden behind the top bar for its first 56px and leaking
+  stock grey under the chip row for the next 56. The chips looked unthemed and
+  were not: they are `rgba(255,255,255,0.1)` and were tinting correctly, over
+  the wrong thing.
+- **Find the element painting the pixel, don't rank elements by size.**
+  `tools/what-paints.js` walks ancestors up from a coordinate, piercing shadow
+  roots, and names the culprit; `tools/rank-vars.js` area-weights every custom
+  property against the viewport and is for *discovering* names on a site you
+  have not themed yet. Reaching for the second one when the symptom is "applied,
+  nothing moved" cost nine rounds on DuckDuckGo, where it blamed `<html>` — the
+  biggest box, already painting correctly, under a wrapper that covered it.
 - **Notion's `--c-*AccPri` is a neutral emphasis step, not a brand accent** — in
   light mode `--c-texAccPri` ships as `#5f5e59`, a grey. The accent belongs to
   the UI-blue family (`--c-palUiBlu600`, `--c-blu*AccPri`) and nowhere else.
