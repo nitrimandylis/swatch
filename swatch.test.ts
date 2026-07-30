@@ -326,6 +326,15 @@ test("the web stylesheet fills each site's semantic core", () => {
   expect(css).toContain("--nds-stroke-grayPrimary: #222222 !important;");
   // The -contr- twins must move together with their base names.
   expect(css).toContain("--nds-text-contr-primary: #eeeeee !important;");
+  // The grid is Cron's own pre-nds names. Ranking the month view by painted
+  // area missed them because --nds-surface-page is the box behind them; the
+  // weekend columns and every rule stayed stock through an applied block.
+  expect(css).toContain("--layout-fill-grid-wknd: #000000 !important;");
+  expect(css).toContain("--layout-line-grid-v: #222222 !important;");
+  expect(css).toContain("--layout-line-grid-h-wknd: #222222 !important;");
+  // Buttons fill from a gradient of hardcoded greys, menus from elevated.
+  expect(css).toContain("--neutral-gradient-contr-bg: #111111 !important;");
+  expect(css).toContain("--nds-surface-contr-elevated: #111111 !important;");
 
   // --- every block ---
   // userContent.css is a user-origin sheet, which loses to author styles for

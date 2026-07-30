@@ -381,5 +381,33 @@
     --nds-text-contr-tertiary: ${r.muted} !important;
     --nds-stroke-grayPrimary: ${r.overlay} !important;
     --nds-stroke-lightGrayPrimary: ${r.overlay} !important;
+
+    /* Menus, popovers and the event panel sit on their own surface, one step
+       above wash. It is never on screen at rest, which is why ranking the
+       month view by painted area missed it. */
+    --nds-surface-elevated: ${r.surface} !important;
+    --nds-surface-contr-elevated: ${r.surface} !important;
+    --nds-gray-200: ${r.surface} !important;
+
+    /* Cron's own pre-nds names, still driving the calendar grid itself. The
+       --nds-* set covers the chrome around it and not one pixel of this: the
+       weekend columns painted #171717 and the rules painted #222222 through a
+       fully applied block. Weekend fill takes base because stock only steps it
+       two units off the page (#191919 -> #171717); there is no palette role for
+       "barely off base" and inventing one is worse than losing the shading. */
+    --layout-fill-grid-wknd: ${r.base} !important;
+    --layout-line-grid-v: ${r.overlay} !important;
+    --layout-line-grid-h: ${r.overlay} !important;
+    --layout-line-grid-v-wknd: ${r.overlay} !important;
+    --layout-line-grid-h-wknd: ${r.overlay} !important;
+
+    /* Buttons — the Month/Today pair, every menu row — fill from a two-stop
+       gradient of hardcoded greys, so a flat colour is the whole fix. The
+       elevated twin is set because it is declared on [data-elevated], a
+       descendant, and a declaration on the element beats our inherited one
+       whatever the origin. */
+    --neutral-gradient-bg: ${r.surface} !important;
+    --neutral-gradient-contr-bg: ${r.surface} !important;
+    --neutral-gradient-contr-elevated-bg: ${r.overlay} !important;
   }
 }
