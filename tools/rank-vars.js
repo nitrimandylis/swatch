@@ -75,26 +75,22 @@
       painted, "of", W * H,
     );
 
+  // Plain text, not console.table. The table renders as a devtools widget that
+  // selects and copies as nothing, so a report pasted back into a chat arrives
+  // empty — which reads exactly like the snippet having failed to run.
   const report = (label, m) => {
     const rows = [...m].sort((x, y) => y[1] - x[1]);
     const total = rows.reduce((s, [, a]) => s + a, 0);
-    let cum = 0;
-    console.log(
-      `%c${label} — ${rows.length} colours, ${Math.round(total)}px²`,
-      "font-weight:bold",
-    );
-    console.table(
-      rows.slice(0, 25).map(([c, a]) => {
-        cum += a;
-        return {
-          colour: c,
-          vars: [...(byColour.get(c) ?? ["(literal — no variable reaches this)"])].join(" "),
-          sharePct: +((a / total) * 100).toFixed(1),
-          cumPct: +((cum / total) * 100).toFixed(1),
-        };
-      }),
-    );
+    let cum = 0, out = `\n${label} — ${rows.length} colours\n`;
+    for (const [c, a] of rows.slice(0, 20)) {
+      cum += a;
+      const vars = [...(byColour.get(c) ?? [])].join(" ") || "(literal — no variable reaches this)";
+      out += `${((a / total) * 100).toFixed(1).padStart(5)}%  ${((cum / total) * 100).toFixed(1).padStart(5)}%  ${c.padEnd(22)}  ${vars}\n`;
+    }
+    return out;
   };
-  report("background", bg);
-  report("text", fg);
+  const out = `${location.host}\n` + report("background", bg) + report("text", fg);
+  console.log(out);
+  // Firefox and Chrome both expose copy() in the console. Straight to clipboard.
+  try { copy(out); console.log("(copied to clipboard)"); } catch {}
 })();
