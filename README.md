@@ -56,7 +56,7 @@ Batman Jazz
   ✓ lazygit
   ✓ git
   ✓ zen (restart Zen to pick it up)
-  ✓ notion (reload any open Notion tab)
+  ✓ web (reload any open tab)
   ✓ cider
   ✓ icons
   ✓ highlight (apps read it at launch)
@@ -71,7 +71,7 @@ app supports, not on preference.
 |---|---|---|
 | 01 | **pointer flip** | swatch writes a theme file next to the config and swaps one line to name it: ghostty, btop, glow, zed, vscode, yazi |
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
-| 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections, and Notion — which has no config at all, so swatch themes the web app through the CSS variables it already builds its UI from and lets Zen load them. All three are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh`, a gitconfig includes `swatch.gitconfig`, or Zen's `userContent.css` imports `swatch-notion.css` |
+| 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections, and the web — Notion, Notion Calendar, GitHub, YouTube, Wikipedia, DuckDuckGo and the Vercel dashboard have no config at all, so swatch themes each one through the CSS variables it already builds its UI from and lets Zen load them. All three are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh`, a gitconfig includes `swatch.gitconfig`, or Zen's `userContent.css` imports `swatch-web.css` |
 | 04 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
 | 05 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
 | 06 | **preferences key** | no config file exists, the setting lives in NSGlobalDomain: the app icon tint (macOS 26 and up) and the system highlight colour, written with `defaults` |
@@ -101,8 +101,10 @@ mkdir -p ~/.config/fzf   # then, in your shell rc:
 
 git config --global include.path '~/.config/git/swatch.gitconfig'
 
-# Notion, themed inside Zen. In your Zen profile's chrome/userContent.css:
-#   @import "swatch-notion.css";
+# The web, themed inside Zen: Notion, Notion Calendar, GitHub, YouTube,
+# Wikipedia, DuckDuckGo, the Vercel dashboard. In your Zen profile's
+# chrome/userContent.css:
+#   @import "swatch-web.css";
 ```
 
 ```bash

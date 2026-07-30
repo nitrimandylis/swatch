@@ -98,14 +98,14 @@ presence would mean "theme me". Swatch writes
 \fI~/.config/fzf/colors.sh\fR only when
 \fI~/.config/fzf\fR exists,
 \fI~/.config/git/swatch.gitconfig\fR only when a gitconfig already includes it, and
-\fIswatch\-notion.css\fR in Zen's chrome directory only when
+\fIswatch\-web.css\fR in Zen's chrome directory only when
 \fIuserContent.css\fR imports it:
 .IP
 .EX
 mkdir \-p ~/.config/fzf
 # in your shell rc: source ~/.config/fzf/colors.sh
 git config \-\-global include.path '~/.config/git/swatch.gitconfig'
-# in Zen's chrome/userContent.css: @import "swatch\-notion.css";
+# in Zen's chrome/userContent.css: @import "swatch\-web.css";
 .EE
 .PP
 The fzf colours reach a shell the next time it starts, not the one that ran
