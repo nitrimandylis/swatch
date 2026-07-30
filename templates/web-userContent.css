@@ -297,10 +297,15 @@
      same pass, so the block was landing and this pane simply reads nothing.
      Both html and body, because they paint the same literal and body covers the
      viewport: setting html alone changed no pixel while the search field beside
-     it moved, which is body painting over a correct canvas. */
+     it moved, which is body painting over a correct canvas.
+
+     The shorthand, not background-color: setting the colour alone also changed
+     nothing, and a background-image paints over a background-color no matter
+     how the colour got there. The shorthand resets the image to none in the
+     same declaration. DDG's SERP has no image worth keeping here. */
   html,
   body {
-    background-color: ${r.base} !important;
+    background: ${r.base} !important;
   }
 }
 
