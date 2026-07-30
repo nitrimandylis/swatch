@@ -292,7 +292,8 @@ test("the web stylesheet fills each site's semantic core", () => {
   expect(css).toMatch(/\n  html,\n  body,\n  \.site-wrapper,\n  \.header-wrap,\n  \[class\*="minimal-homepage_"\] \{\n\s+background: #000000 !important;/);
   // Prefix match, never the whole class: DDG's homepage panes are CSS modules
   // and the __jbnsx suffix rotates on every deploy.
-  expect(css).not.toMatch(/minimal-homepage_\w+__\w+/);
+  // Selectors, not prose — the block's own comment quotes the live hash.
+  expect(css).not.toMatch(/["'.]minimal-homepage_\w+__\w+/);
   // Declarations, not selectors: a pane spanning several elements is still one
   // exception, and each of these was confirmed a literal by setting every
   // variable holding its colour and watching nothing move. Four is the number

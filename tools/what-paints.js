@@ -14,6 +14,11 @@
   const W = innerWidth, H = innerHeight;
   const panes = [
     ["top bar", W / 2, 30],
+    // The strip under the top bar is its own pane on most apps — YouTube's
+    // category chips, a tab row, a breadcrumb — and it paints separately from
+    // both the bar above it and the content below.
+    ["second row", W / 3, 95],
+    ["nav item", 60, 90],
     ["left rail", 40, H / 2],
     ["content", W / 2, H / 2],
     ["right gutter", W - 40, H / 2],
