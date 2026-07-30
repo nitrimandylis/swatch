@@ -89,7 +89,33 @@
     }
     return out;
   };
-  const out = `${location.host}\n` + report("background", bg) + report("text", fg);
+  // Which element actually declares the top background's variables. A block
+  // scoped to :root loses silently to a descendant that redefines the set:
+  // getComputedStyle reports the new value while the page paints the old one,
+  // and an override that lost looks identical to a variable nobody reads.
+  // An element declares a property when its computed value differs from its
+  // parent's — custom properties inherit, so anything else came from a rule.
+  const path = (el) =>
+    el.tagName.toLowerCase() +
+    (el.id ? `#${el.id}` : "") +
+    [...el.attributes].filter((a) => ["dark", "light", "class"].includes(a.name) || a.name.startsWith("data-"))
+      .map((a) => (a.value ? `[${a.name}="${a.value.slice(0, 40)}"]` : `[${a.name}]`)).join("");
+
+  const top = [...bg].sort((x, y) => y[1] - x[1])[0];
+  const names = [...(byColour.get(top?.[0]) ?? [])].slice(0, 6);
+  let where = `\ndeclared on (top background's vars)\n`;
+  for (const name of names) {
+    const hits = [];
+    for (const el of document.querySelectorAll("*")) {
+      const v = getComputedStyle(el).getPropertyValue(name);
+      const p = el.parentElement ? getComputedStyle(el.parentElement).getPropertyValue(name) : "";
+      if (v && v !== p) hits.push(`${path(el)} = ${v.trim()}`);
+      if (hits.length > 3) break;
+    }
+    where += `  ${name}\n${hits.map((h) => `    ${h}\n`).join("") || "    (only on the root)\n"}`;
+  }
+
+  const out = `${location.host}\n` + report("background", bg) + report("text", fg) + where;
   console.log(out);
   // Firefox and Chrome both expose copy() in the console. Straight to clipboard.
   try { copy(out); console.log("(copied to clipboard)"); } catch {}
