@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -214,6 +214,28 @@ Locked=1
 `;
   expect(zenDefaultProfile(ini)).toBe("Profiles/a1b2c3d4.Default");
   expect(zenDefaultProfile("[Profile0]\nDefault=1\n")).toBeNull();
+});
+
+test("ciderConfig sets the accent and the two flags that make Cider read it", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  // The nesting Cider ships: `appearance` under visual, the rest under ui_custom.
+  const cfg = `visual:
+  appearance: light
+  customCSS: ""
+  ui_custom:
+    useSystemAccentColor: true
+    customAccentColor: false
+    customAccentColorValue: "#af52de"
+    customTintColorValue: "#fa2d48"
+`;
+  const out = ciderConfig(cfg, t);
+  expect(out).toContain("  appearance: dark\n");
+  expect(out).toContain("    useSystemAccentColor: false\n");
+  expect(out).toContain("    customAccentColor: true\n");
+  expect(out).toContain('    customAccentColorValue: "#ff00aa"\n');
+  expect(out).toContain('    customTintColorValue: "#fa2d48"\n'); // not ours, left alone
+  // A Cider that renamed the key must fail loudly, not write a half-theme.
+  expect(() => ciderConfig(cfg.replace("customAccentColorValue", "accentValue"), t)).toThrow(/found 0/);
 });
 
 test("readBmp reads a hand-built 2x2 24-bit BMP", () => {

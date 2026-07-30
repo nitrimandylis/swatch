@@ -77,6 +77,12 @@ Directory holding your themes, one subdirectory each. Defaults to
 \fI~/.config/swatch/themes\fR. Point it at a checkout to keep your themes in a
 repository of their own.
 .SH NOTES
+Cider rewrites its own settings file from memory whenever it saves, so a theme
+written while Cider is running is reverted with no error. Swatch says so when it
+sees Cider running: quit and reopen it, then
+.B swatch status
+confirms.
+.PP
 VS Code and Zen only pick up a new theme after the app restarts. Everything
 else reloads on its own: sketchybar and borders are reconfigured in place, and
 the terminal tools pick up their theme file the next time they run.

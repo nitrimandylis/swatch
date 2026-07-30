@@ -325,6 +325,29 @@ export function zenProfile(): string | null {
   return existsSync(dir) ? dir : null;
 }
 
+const CIDER = join(homedir(), "Library", "Application Support", "sh.cider.genten");
+
+/**
+ * Cider 4's settings file. Four lines, all unique keys, so no block scoping is
+ * needed. Cider's UI is artwork-driven by design — the accent is the only thing
+ * a palette should say about it, and the two flags above it are what make Cider
+ * read the accent at all instead of the system one.
+ * ponytail: no custom CSS. Restyling an Electron SPA means selectors that rot
+ * silently on every Cider release, and `status` can only see changed lines.
+ */
+export function ciderConfig(text: string, t: Theme): string {
+  let out = replaceLine(text, /^  appearance: .*$/, `  appearance: ${t.meta.variant}`);
+  out = replaceLine(out, /^    useSystemAccentColor: .*$/, `    useSystemAccentColor: false`);
+  out = replaceLine(out, /^    customAccentColor: .*$/, `    customAccentColor: true`);
+  return replaceLine(
+    out,
+    /^    customAccentColorValue: .*$/,
+    `    customAccentColorValue: "${t.roles.accent}"`,
+  );
+}
+
+const ciderRunning = () => Bun.spawnSync(["pgrep", "-x", "Cider"]).exitCode === 0;
+
 // ponytail: JSON.stringify quotes the path well enough for AppleScript; theme
 // dirs are slugs, so there are no quotes or backslashes to escape.
 const SET_PICTURE = (p: string) =>
@@ -637,6 +660,20 @@ export const SURFACES: Surface[] = [
         inject(readFileSync(css, "utf8"), render(zenCssTpl, t), "/*", "*/"),
       );
       return "zen (restart Zen to pick it up)";
+    },
+  },
+  {
+    name: "cider",
+    apply(t) {
+      const cfg = join(CIDER, "spa-config.yml");
+      if (!existsSync(cfg)) return null;
+      put(cfg, ciderConfig(readFileSync(cfg, "utf8"), t));
+      // Cider rewrites this file from memory whenever it saves, so a write
+      // landing while it runs is reverted with no error. Say so; `status`
+      // catches it afterwards like any other drift.
+      return ciderRunning()
+        ? "cider (QUIT AND REOPEN CIDER — it overwrites this file while running)"
+        : "cider";
     },
   },
 ];

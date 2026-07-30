@@ -13,7 +13,7 @@
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
-![surfaces](https://img.shields.io/badge/surfaces-12-e85a9c?style=flat-square&labelColor=111111)
+![surfaces](https://img.shields.io/badge/surfaces-13-e85a9c?style=flat-square&labelColor=111111)
 ![runtime](https://img.shields.io/badge/runtime-bun-4e749e?style=flat-square&labelColor=111111)
 ![deps](https://img.shields.io/badge/runtime_deps-0-4e749e?style=flat-square&labelColor=111111)
 ![license](https://img.shields.io/badge/license-MIT-e85a9c?style=flat-square&labelColor=111111)
@@ -54,6 +54,7 @@ Batman Jazz
   ✓ cava
   ✓ lazygit
   ✓ zen (restart Zen to pick it up)
+  ✓ cider
 ```
 
 ## 🔧 The surfaces
@@ -65,8 +66,9 @@ app supports, not on preference.
 |---|---|---|
 | 01 | **pointer flip** | swatch writes a theme file next to the config and swaps one line to name it: ghostty, btop, glow, zed, vscode, yazi |
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
-| 03 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
-| 04 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
+| 03 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour: cider |
+| 04 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
+| 05 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
 
 | | command | what it actually does |
 |---|---|---|
@@ -162,7 +164,7 @@ flowchart LR
     R --> T[templates/]
     T --> F[theme files]
     R --> M[marker blocks]
-    F --> A[12 surfaces]
+    F --> A[13 surfaces]
     M --> A
     R --> D[theme README.md]
 ```
@@ -206,6 +208,12 @@ flowchart LR
   `#navigator-toolbox` and `.browserContainer` leaves the workspace gradient
   showing down the sides of the window. Setting the variable instead means every
   colour Zen derives with `color-mix()` follows along.
+- **Cider owns its settings file and rewrites it from memory.** Every save
+  serialises the whole of `spa-config.yml` from the running app, so an edit made
+  while Cider is open is reverted with no error. Swatch checks `pgrep -x Cider`
+  and tells you to quit and reopen. Cider also needs `useSystemAccentColor:
+  false` and `customAccentColor: true` set, or the accent it is given is
+  ignored, which is why the surface writes four keys and not one.
 - **A "desktop" in System Events is a display, not a Space.** One monitor with
   five Spaces reports `count of desktops` = 1, so `set picture of every desktop`
   changes exactly one wallpaper. Spaces each keep their own, in
