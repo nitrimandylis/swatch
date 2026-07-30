@@ -314,12 +314,188 @@
      gutter is what found it — the area ranker had blamed html, which owns the
      largest box but not the visible pixel. Every ancestor between the wrapper
      and the result list is transparent, so this one rule reaches all of it.
-     .header-wrap is the same, found the same way, one pane higher. */
+     .header-wrap is the same, found the same way, one pane higher.
+
+     The homepage is a different shell from the results page — no body--serp, no
+     .site-wrapper — and its two panes are CSS-module classes carrying a build
+     hash (minimal-homepage_layout__jbnsx). Matching the prefix rather than the
+     whole name is the only form that survives DuckDuckGo's next deploy; when it
+     does change, this degrades to their own near-black rather than breaking. */
   html,
   body,
   .site-wrapper,
-  .header-wrap {
+  .header-wrap,
+  [class*="minimal-homepage_"] {
     background: ${r.base} !important;
+  }
+}
+
+@-moz-document domain("managebac.com") {
+  /* Faria's fork of Bootstrap 5.3, prefix --f-. One block covers every school:
+     the palette lives in a `theme-<colour>` class on <body> that the school
+     picks server-side, so the selectors match the family rather than one name.
+
+     THE RULE-1 EXCEPTION LIVES HERE, and it is deliberate. Measured on the
+     student dashboard: a variables-only block moves 33.1% of painted background
+     area, against 99.5% for Notion. ManageBac ships 403 utility classes that
+     paint hardcoded hex with !important — `.bg-gray-100{background-color:#f2f4f7
+     !important}` alone covers 67% of the viewport, `.bg-white` most of the rest,
+     `.card-tinted{background-color:#f9fafb}` 29% — and no variable reaches any
+     of them. With the utility overrides at the bottom of this block: 90.7%.
+
+     The exception is bounded to *literal* utility classes. Everything Bootstrap
+     drives through a variable is driven through the variable, which is why the
+     component section exists: `--f-card-bg` and friends are declared INSIDE
+     `.card{}`, `.modal{}`, `.dropdown-menu{}`, so a :root override never reaches
+     them and the override has to sit on the same class. That is a variable
+     override with a class selector, not an element selector.
+
+     Bootstrap utility names are effectively a public API — `.bg-white` has meant
+     one thing for a decade — which is what makes this survivable where YouTube's
+     shadow-root internals would not.
+
+     Not touched: the eight `--f-<programme>` curriculum colours (--f-myp, --f-dp,
+     --f-ipc …) and the IB subject-group hues. Those are content, like Notion's
+     block colours. Nor the red/green/amber status family. */
+
+  :root,
+  body,
+  body[class*="theme-"] {
+    --f-body-bg: ${r.base} !important;
+    --f-body-color: ${r.text} !important;
+    --f-emphasis-color: ${r.text} !important;
+    --f-heading-color: ${r.text} !important;
+    --f-border-color: ${r.overlay} !important;
+
+    /* The brand. `theme-teal` here, but every school's class declares the same
+       six names, so the family selector above carries whichever one is live. */
+    --f-primary-color: ${r.accent} !important;
+    --f-primary-emphasis-color: ${r.accent} !important;
+    --f-primary-hover-color: ${r.deep} !important;
+    --f-primary-active-color: ${r.deep} !important;
+    --f-primary-text-color: ${r.accent} !important;
+    /* Not an accent: --f-secondary-color is the pale brand WASH behind
+       secondary buttons and selected rows (#cce8e1 on teal). The accent here
+       turns every one of them into a solid block. */
+    --f-secondary-color: ${r.overlay} !important;
+    /* The selected-row wash, and the only place `deep` earns its keep here: the
+       sidebar's active item is a brand tint in ManageBac, and overlay is
+       already the hover tier, so sharing it would erase the difference between
+       "you are here" and "your pointer is here". */
+    --f-light-bg: ${r.deep} !important;
+    --f-light-hover-bg: ${r.overlay} !important;
+
+    --f-link-color: ${r.accent} !important;
+    --f-link-hover-color: ${r.deep} !important;
+  }
+
+  /* Component variables, each on the class that declares it. A :root override
+     is silently lost here — Bootstrap 5.3 redeclares the whole component set
+     inside the component's own rule. */
+  .card,
+  .modal,
+  .dropdown-menu,
+  .list-group,
+  .offcanvas,
+  .popover,
+  .table {
+    --f-card-bg: ${r.surface} !important;
+    --f-card-cap-bg: ${r.surface} !important;
+    --f-card-border-color: ${r.overlay} !important;
+    --f-modal-bg: ${r.surface} !important;
+    --f-dropdown-bg: ${r.surface} !important;
+    --f-dropdown-link-color: ${r.text} !important;
+    --f-list-group-bg: ${r.surface} !important;
+    --f-offcanvas-bg: ${r.surface} !important;
+    --f-popover-bg: ${r.surface} !important;
+    --f-table-bg: ${r.surface} !important;
+  }
+
+  .form-control,
+  .form-select {
+    --f-form-control-bg: ${r.overlay} !important;
+    background-color: ${r.overlay} !important;
+    color: ${r.text} !important;
+  }
+
+  /* The literal utilities. Every rule below replaces a hardcoded hex that no
+     variable reaches; each was read off the compiled stylesheet, not recalled.
+     `.f-menu__nav` is the sidebar, `.f-blank-slate` the empty-state panel —
+     both paint white from their own rules. */
+  .bg-white,
+  .navbar,
+  .f-menu__nav,
+  .f-menu__link,
+  .f-blank-slate,
+  .card-header,
+  .card-footer {
+    background-color: ${r.surface} !important;
+  }
+
+  .bg-gray-100 {
+    background-color: ${r.base} !important;
+  }
+
+  /* Light mode runs three background tiers — page #f2f4f7, tinted #f9fafb,
+     card #fff — and this collapses the top two into surface. The palette's
+     third step is overlay, which every block in this file uses for borders and
+     controls; a panel painted in it reads as an input, not as a panel. The
+     tinted cards keep their border, so the tier is not lost, only moved. */
+  .bg-gray-50,
+  .card-tinted {
+    background-color: ${r.surface} !important;
+  }
+
+  /* Text. `.color-secondary` is ManageBac's own class, not Bootstrap's
+     `.text-secondary`, and it carries 39.4% of painted text — labels, dates,
+     column headers, all of which have to be read. ansi.white[0] rather than
+     roles.muted for the nord reason: muted measures 1.69:1 there. */
+  .color-secondary,
+  .text-gray-600,
+  .text-gray-700,
+  .f-menu__link-title {
+    color: ${a.white[0]} !important;
+  }
+
+  /* `.f-tile` is the dashboard's quick-link panel and `.btn-secondary` the
+     neutral button, and both hardcode the pair — `background-color:#fff` with
+     `color:#101828` in the same rule. The colour has to move with the
+     background or the label goes dark-on-dark: the tiles were unreadable in the
+     first pass, which is what a background-only override buys you here.
+
+     They resist an author-origin override in Chrome — ManageBac's own rule is
+     more specific — and land in Zen anyway, because user-origin !important
+     outranks author declarations whatever their specificity. That asymmetry is
+     why these are verified in Zen and nowhere else. */
+  .f-tile,
+  .f-tile--link {
+    background-color: ${r.surface} !important;
+    border-color: ${r.overlay} !important;
+    color: ${r.text} !important;
+  }
+
+  /* Buttons and inputs share overlay: the tier above surface is where this
+     block puts controls, so a button on a card stays distinct from it. */
+  .btn-secondary {
+    background-color: ${r.overlay} !important;
+    border-color: ${r.overlay} !important;
+    color: ${r.text} !important;
+  }
+
+  .text-gray-900,
+  .text-gray-800,
+  .text-dark,
+  .text-body {
+    color: ${r.text} !important;
+  }
+
+  .text-muted,
+  .text-gray-500 {
+    color: ${r.muted} !important;
+  }
+
+  .link-primary {
+    color: ${r.accent} !important;
   }
 }
 
