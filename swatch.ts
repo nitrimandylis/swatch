@@ -332,7 +332,13 @@ const CIDER = join(homedir(), "Library", "Application Support", "sh.cider.genten
  * scoping is needed. Cider's UI is artwork-driven by design — `adaptiveColorPercent`
  * and the immersive views follow the album cover whatever the palette says — so
  * this sets the handful of places Cider will take a colour from us instead:
- * the accent, the UI tint and the progress bar.
+ * the accent and the progress bar.
+ * ponytail: no UI tint. `customTintColor` washes every surface in the app at
+ * `customTintColorRatio`, and even with `deep` rather than `accent` the sidebar
+ * came out solid maroon — the palette stops being a theme and becomes a filter.
+ * ponytail: no visualiser. `ImmersiveSpectrumDeck.ColorMode` takes `artwork` or
+ * `classic` and nothing else; `classic` is three hardcoded arrays in Cider's own
+ * bundle, so neither value can be driven from a palette.
  * ponytail: no background image. `backgroundBlurMap.src` can point at the
  * theme's wallpaper, but Cider re-serialises the path unquoted, so a quoted
  * write reports drift forever — matching another program's YAML quoting rules
@@ -351,15 +357,6 @@ export function ciderConfig(text: string, t: Theme): string {
     out,
     /^    customAccentColorValue: .*$/,
     `    customAccentColorValue: "${t.roles.accent}"`,
-  );
-  // The tint washes the whole UI at customTintColorRatio, which stays whatever
-  // the user set it to. `deep` rather than `accent`: a full-saturation wash over
-  // every surface is a lot, and `deep` is the same hue with the volume down.
-  out = replaceLine(out, /^    customTintColor: .*$/, `    customTintColor: true`);
-  out = replaceLine(
-    out,
-    /^    customTintColorValue: .*$/,
-    `    customTintColorValue: "${t.roles.deep}"`,
   );
   // AMProgressBar. Off by default, which is why the accent shows up almost
   // nowhere until you turn it on.

@@ -249,9 +249,9 @@ test("ciderConfig sets every key Cider needs to take a colour from us", () => {
   expect(out).toContain("    useSystemAccentColor: false\n");
   expect(out).toContain("    customAccentColor: true\n");
   expect(out).toContain('    customAccentColorValue: "#ff00aa"\n');
-  expect(out).toContain("    customTintColor: true\n");
-  expect(out).toContain('    customTintColorValue: "#8f2a3a"\n'); // deep, not accent
+  expect(out).toContain("    customTintColor: false\n"); // the UI-wide tint stays off
   expect(out).toContain("    useAccentColor: true\n");
+  expect(out).toContain('    customTintColorValue: "#fa2d48"\n'); // not ours
   expect(out).toContain("    customTintColorRatio: 0.5\n"); // the user's, left alone
   // Cider's own background stays Cider's: swatch colours it, never replaces it.
   expect(out).toContain("    enabled: false\n    src: \"\"\n");
