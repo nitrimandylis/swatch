@@ -192,6 +192,23 @@
     background-color: ${r.base} !important;
   }
 
+  /* #frosted-glass is a fixed, full-width layer from y=0 to y=112 at
+     rgba(15,15,15,0.8) with blur(48px). ytd-masthead outranks it on z-index and
+     is painted above, so only the strip below the top bar — the chip row, and
+     the sidebar's top entry beside it — shows the literal through. Measured on
+     nord and spider-verse: that strip read #0f0e12, which is exactly #0f0f0f at
+     80% over base, and the chips and the selected guide entry read
+     rgba(255,255,255,0.1) over THAT, not over ours. So this one line is what
+     makes the chips and the Home pill tint; they are still not selected
+     anywhere, and --additive-background is still left alone.
+     color-mix rather than a flat hex to keep the 80%: the layer is meant to let
+     scrolled content blur through it, and an opaque bar would end that. A
+     browser that cannot parse color-mix drops the declaration and lands back on
+     YouTube's grey, which is the right way for this to fail. */
+  #frosted-glass {
+    background-color: color-mix(in srgb, ${r.base} 80%, transparent) !important;
+  }
+
   /* The search field, same literal case: #121212, and the two variables holding
      that colour were set to surface with the field unchanged. Its class is
      component-generated and will not survive a rename — when it does, the field

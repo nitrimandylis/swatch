@@ -298,12 +298,18 @@ test("the web stylesheet fills each site's semantic core", () => {
   // and the __jbnsx suffix rotates on every deploy.
   // Selectors, not prose — the block's own comment quotes the live hash.
   expect(css).not.toMatch(/["'.]minimal-homepage_\w+__\w+/);
+  // The layer under the chip row. Kept translucent so scrolled content still
+  // blurs through it; that is also why it is the one exception written with
+  // color-mix instead of a flat hex.
+  expect(css).toMatch(
+    /\n  #frosted-glass \{\n\s+background-color: color-mix\(in srgb, #000000 80%, transparent\) !important;/,
+  );
   // Declarations, not selectors: a pane spanning several elements is still one
   // exception, and each of these was confirmed a literal by setting every
-  // variable holding its colour and watching nothing move. Four is the number
+  // variable holding its colour and watching nothing move. Five is the number
   // that must not creep — YouTube and DuckDuckGo are literal-heavy in a way
   // Notion was not, and this assertion is what keeps that from becoming normal.
-  expect((css.match(/^\s+background(-color)?: #/gm) ?? []).length).toBe(4);
+  expect((css.match(/^\s+background(-color)?: (#|color-mix)/gm) ?? []).length).toBe(5);
 
   // The canaries were a debugging aid, not a feature. They proved the blocks
   // applied while the pixels stayed stock; leaving them ships dead weight.
