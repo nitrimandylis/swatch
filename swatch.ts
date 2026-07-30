@@ -354,9 +354,16 @@ const CIDER = join(homedir(), "Library", "Application Support", "sh.cider.genten
  * and the immersive views follow the album cover whatever the palette says — so
  * this sets the handful of places Cider will take a colour from us instead:
  * the accent and the progress bar.
- * ponytail: no UI tint. `customTintColor` washes every surface in the app at
- * `customTintColorRatio`, and even with `deep` rather than `accent` the sidebar
- * came out solid maroon — the palette stops being a theme and becomes a filter.
+ * The tint is how `base` gets in. Cider's boot script computes
+ * `#121212 * ratio + tint * (1 - ratio)` — the ratio weights *Cider's* grey, not
+ * ours — so a ratio of 0 puts the palette colour in exactly, with no blend to
+ * reason about. An earlier attempt set `deep` at the default 0.5 and the app
+ * came out solid maroon; that is what half a saturated crimson looks like, not
+ * an argument against the tint. A dark background role at ratio 0 is a
+ * background colour, which is all this is.
+ * It has to go through the tint rather than the CSS: the boot script writes
+ * `--qDarkPage` as an inline style on documentElement, and inline beats any
+ * stylesheet we could inject.
  * ponytail: no visualiser. `ImmersiveSpectrumDeck.ColorMode` takes `artwork` or
  * `classic` and nothing else; `classic` is three hardcoded arrays in Cider's own
  * bundle, so neither value can be driven from a palette.
@@ -380,6 +387,16 @@ export function ciderConfig(text: string, t: Theme): string {
   // AMProgressBar. Off by default, which is why the accent shows up almost
   // nowhere until you turn it on.
   out = replaceLine(out, /^    useAccentColor: .*$/, `    useAccentColor: true`);
+  // The window background. In light mode Cider clamps the ratio to [0.8, 1], so
+  // a light palette only ever gets a fifth of its base here — untested, like
+  // every other light path in this file.
+  out = replaceLine(out, /^    customTintColor: .*$/, `    customTintColor: true`);
+  out = replaceLine(
+    out,
+    /^    customTintColorValue: .*$/,
+    `    customTintColorValue: "${t.roles.base}"`,
+  );
+  out = replaceLine(out, /^    customTintColorRatio: .*$/, `    customTintColorRatio: 0`);
   // Unquoted and space-free, or Cider rewrites it and `status` never goes green.
   const css = ciderCss(t);
   if (/\s/.test(css)) throw new Error("cider CSS must not contain whitespace");
@@ -400,9 +417,17 @@ export function ciderConfig(text: string, t: Theme): string {
  * and flashes #ff5f7a the moment you touch it — invisible on a red palette,
  * wrong on every other one.
  *
- * Variables only, no element selectors: the same rule as Zen. Cider's markup can
- * change freely underneath this and the worst case is that a variable stops
- * being read, never that the app is painted wrong.
+ * Variables only, no element selectors, with exactly one exception: the same
+ * rule as Zen. Cider's markup can change freely underneath the variables and the
+ * worst case is that one stops being read, never that the app is painted wrong.
+ *
+ * The exception is `.new-shell-page-container`, the content pane, whose
+ * background is `color-mix(in srgb, rgb(10,10,10), var(--keyColor) 2%)` — the
+ * black is a literal, not a variable, so no variable override can reach the
+ * largest surface in the window and the accent is the only palette colour that
+ * ever touches it. One selector setting one property, and if Cider renames the
+ * class the pane falls back to Cider's own near-black rather than to anything
+ * broken. Cider injects this stylesheet last, so matching its specificity wins.
  * Written to match Cider's YAML writer byte for byte, because it re-serialises
  * this file from memory and anything else reports drift forever. Two rules, both
  * learned the hard way: the value goes in **unquoted**, since Cider emits a plain
@@ -422,7 +447,8 @@ export function ciderCss(t: Theme): string {
     `--keyColor-rollover:${rollover};--keyColor-rollover-rgb:${rgbTriplet(rollover)};` +
     `--keyColor-pressed:${pressed};--keyColor-pressed-rgb:${rgbTriplet(pressed)};` +
     `--keyColor-deepPressed:${t.roles.deep};--keyColor-deepPressed-rgb:${rgbTriplet(t.roles.deep)};` +
-    `--keyColor-disabled:rgba(${rgbTriplet(a)},.35)}`
+    `--keyColor-disabled:rgba(${rgbTriplet(a)},.35)}` +
+    `.new-shell-page-container{background:${t.roles.base}}`
   );
 }
 

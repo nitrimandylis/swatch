@@ -256,13 +256,16 @@ test("ciderConfig sets every key Cider needs to take a colour from us", () => {
   expect(out).toContain("    useSystemAccentColor: false\n");
   expect(out).toContain("    customAccentColor: true\n");
   expect(out).toContain('    customAccentColorValue: "#ff00aa"\n');
-  expect(out).toContain("    customTintColor: false\n"); // the UI-wide tint stays off
   expect(out).toContain("    useAccentColor: true\n");
   // One line, double-quoted, so Cider's own re-serialisation matches it.
   expect(out).toContain("  customCSS: body,body.body--dark");
   expect(out.split("\n").filter((l) => l.startsWith("  customCSS:"))).toHaveLength(1);
-  expect(out).toContain('    customTintColorValue: "#fa2d48"\n'); // not ours
-  expect(out).toContain("    customTintColorRatio: 0.5\n"); // the user's, left alone
+  // The window background. Ratio 0 weights Cider's own grey at zero, so the
+  // base lands exactly instead of blending halfway to it.
+  expect(out).toContain("    customTintColor: true\n");
+  expect(out).toContain('    customTintColorValue: "#000000"\n'); // base
+  expect(out).toContain("    customTintColorRatio: 0\n");
+  expect(out).not.toContain("#fa2d48"); // no Apple red left in the config either
   // Cider's own background stays Cider's: swatch colours it, never replaces it.
   expect(out).toContain("    enabled: false\n    src: \"\"\n");
 });
@@ -281,6 +284,9 @@ test("ciderCss overrides the accent states Cider hardcodes to Apple red", () => 
   expect(css).toContain("--keyColor-deepPressed:#8f2a3a"); // deep
   expect(css).toContain("--keyColor-disabled:rgba(255,0,170,.35)");
   expect(css).not.toContain("fa2d48"); // no Apple red left anywhere
+  // The one element selector: the content pane's black is a literal in Cider's
+  // own color-mix, so no variable can reach the largest surface in the window.
+  expect(css).toContain(".new-shell-page-container{background:#000000}");
   // Any whitespace at all lets Cider's YAML writer fold the line at 80 columns,
   // which reports drift on every status forever after.
   expect(css).not.toMatch(/\s/);
