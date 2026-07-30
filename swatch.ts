@@ -519,6 +519,11 @@ export function pickWallpaper(dir: string, files: string[]): string | null {
     stdout: "pipe",
     stderr: "inherit",
   });
+  // chafa draws with the kitty graphics protocol here (`ESC _ G a=T`), and those
+  // placements are out-of-band: fzf redraws the text it owns and the picture
+  // stays painted over whatever comes next. `a=d` deletes every placement. On a
+  // terminal without the protocol it is an APC string, which is swallowed.
+  if (preview.length) process.stdout.write("\x1b_Ga=d\x1b\\");
   // Any non-zero exit is a refusal: escape, ctrl-c, or no match. All mean the
   // same thing to the caller, which is "do not touch anything".
   return r.exitCode === 0 ? r.stdout.toString().trim() || null : null;
