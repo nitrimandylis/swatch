@@ -9,7 +9,7 @@
 
 <div align="center">
 
-### `ONE PALETTE // SEVENTEEN SURFACES // ONE COMMAND`
+### `ONE PALETTE // EIGHTEEN SURFACES // ONE COMMAND`
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
@@ -25,8 +25,8 @@
 
 ## 🎨 What is this
 
-Theming a desktop by hand means the same hex code lives in fourteen files, and
-changing your mind means finding all fourteen. Swatch replaces that with one
+Theming a desktop by hand means the same hex code lives in eighteen files, and
+changing your mind means finding all eighteen. Swatch replaces that with one
 `palette.toml` per theme and a compiled CLI that writes every surface from it:
 terminal, editors, status bar, file manager, browser, wallpaper.
 
@@ -56,6 +56,7 @@ Batman Jazz
   ✓ lazygit
   ✓ git
   ✓ zen (restart Zen to pick it up)
+  ✓ notion (reload any open Notion tab)
   ✓ cider
   ✓ icons
   ✓ highlight (apps read it at launch)
@@ -70,9 +71,8 @@ app supports, not on preference.
 |---|---|---|
 | 01 | **pointer flip** | swatch writes a theme file next to the config and swaps one line to name it: ghostty, btop, glow, zed, vscode, yazi |
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
-| 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections. Both are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh` or a gitconfig includes `swatch.gitconfig` |
+| 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections, and Notion — which has no config at all, so swatch themes the web app through the CSS variables it already builds its UI from and lets Zen load them. All three are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh`, a gitconfig includes `swatch.gitconfig`, or Zen's `userContent.css` imports `swatch-notion.css` |
 | 04 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
-| 05 | **user stylesheet** | the app has no config at all, so swatch themes the web app through the CSS variables it already builds its UI from, loaded by the browser: notion |
 | 05 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
 | 06 | **preferences key** | no config file exists, the setting lives in NSGlobalDomain: the app icon tint (macOS 26 and up) and the system highlight colour, written with `defaults` |
 | 07 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
@@ -229,6 +229,29 @@ flowchart LR
   `#navigator-toolbox` and `.browserContainer` leaves the workspace gradient
   showing down the sides of the window. Setting the variable instead means every
   colour Zen derives with `color-mix()` follows along.
+- **A user stylesheet needs `!important` on every line, and skipping it fails as
+  a *partial success*.** `userContent.css` is a **user origin** sheet, which the
+  cascade ranks below author styles for normal declarations, so the page wins.
+  The symptom is not "nothing happened": Notion declares its theme-varying
+  colours on `.notion-dark-theme`, which is `<body>` itself, so an author
+  declaration sits on the same element and beats ours — while the blues it
+  declares only on `:root` reach `<body>` by inheritance, and a declaration on
+  an element beats an inherited value even from a weaker origin. So the accent
+  landed and the backgrounds did not, which reads like a palette-mapping bug
+  and is not one.
+- **You cannot verify a user stylesheet from a devtools injection.** A `<style>`
+  tag added to the page is *author* origin, so it applies cleanly and proves
+  nothing about the origin that actually matters. Notion's variable map was
+  worked out that way and every one of those findings held; the cascade bug
+  only appeared in the real browser. Screenshot it and sample the pixels.
+- **Notion's `--c-*AccPri` is a neutral emphasis step, not a brand accent** — in
+  light mode `--c-texAccPri` ships as `#5f5e59`, a grey. The accent belongs to
+  the UI-blue family (`--c-palUiBlu600`, `--c-blu*AccPri`) and nowhere else.
+  Likewise `--c-texSec` carries column headers and sidebar labels rather than
+  comments, so it takes `ansi.white[0]`; `roles.muted` is the comment colour by
+  palette convention and measures 1.69:1 against nord's base, which is
+  invisible. **Nord is the palette to check a new mapping against** — it is
+  low-contrast by design, so it fails first.
 - **The icon tint is three keys and a notification.** macOS 26 stores it in
   NSGlobalDomain as `AppleIconAppearanceTheme` (`TintedDark`/`TintedLight`),
   `AppleIconAppearanceTintColor` (`Other`, the slot meaning "not one of the nine
