@@ -284,6 +284,18 @@ test("the web stylesheet fills each site's semantic core", () => {
   expect(css).toContain("--sds-color-background-01: #000000 !important;");
   expect(css).toContain("--sds-color-text-01: #eeeeee !important;");
 
+  // Both pages paint their canvas from a literal no variable reaches, verified
+  // by overriding every variable holding that colour and watching nothing move.
+  // Same exception as Notion's body.notion-body, and the count of it is capped:
+  // three element selectors in the whole sheet, one per site that needs one.
+  expect(css).toMatch(/ytd-app \{\n\s+background-color: #000000 !important;/);
+  expect(css).toMatch(/\n  html \{\n\s+background-color: #000000 !important;/);
+  expect((css.match(/^\s+background-color:/gm) ?? []).length).toBe(3);
+
+  // The canaries were a debugging aid, not a feature. They proved the blocks
+  // applied while the pixels stayed stock; leaving them ships dead weight.
+  expect(css).not.toContain("--swatch-canary");
+
   // --- notion calendar ---
   // Cron renamed. Zero --c-* properties on the page; the Notion block's names
   // would apply cleanly and do nothing.

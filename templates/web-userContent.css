@@ -150,10 +150,6 @@
   html[light],
   body,
   ytd-app {
-    /* ponytail: temporary. Reads back from the page console as proof this block
-       applied at all — the one thing neither `status` nor a screenshot can see.
-       Delete once YouTube is verified. */
-    --swatch-canary: youtube !important;
     --yt-sys-color-baseline--base-background: ${r.base} !important;
     --yt-deprecated-general-background-a: ${r.base} !important;
     --yt-deprecated-general-background-b: ${r.base} !important;
@@ -171,6 +167,16 @@
     --yt-sys-color-baseline--call-to-action: ${r.accent} !important;
     --yt-deprecated-light-blue: ${r.accent} !important;
     --yt-sys-color-baseline--outline-opaque: ${r.overlay} !important;
+  }
+
+  /* The one element selector, deliberately. ytd-app paints #0f0f0f from a
+     literal: every variable above was verified applied — getComputedStyle read
+     our base on html, body and ytd-app itself — and the canvas did not move.
+     YouTube's own rule for it lives inside a Polymer shadow root, so it is not
+     in document.styleSheets and cannot be read back to name the source.
+     ponytail: one selector, measured. Do not generalise this into more. */
+  ytd-app {
+    background-color: ${r.base} !important;
   }
 }
 
@@ -239,9 +245,6 @@
   :root,
   html,
   body {
-    /* ponytail: temporary, same as YouTube's. Delete once verified. */
-    --swatch-canary: duckduckgo !important;
-
     /* the page */
     --theme-col-bg-page: ${r.base} !important;
     --theme-col-bg-page-alt-3: ${r.base} !important;
@@ -282,6 +285,15 @@
     --theme-col-txt-button-ghostsecondary: ${a.white[0]} !important;
     --sds-color-text-03: ${a.white[0]} !important;
     --sds-color-text-on-dark-02: ${a.white[0]} !important;
+  }
+
+  /* The one element selector, deliberately. <html> paints #161616 — 97.2% of
+     the page — from a literal. All six variables holding that colour were set
+     and verified applied; the search field beside it moved to overlay in the
+     same pass, so the block was landing and this pane simply reads nothing.
+     ponytail: one selector, measured. Do not generalise this into more. */
+  html {
+    background-color: ${r.base} !important;
   }
 }
 
