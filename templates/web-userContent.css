@@ -299,12 +299,15 @@
      viewport: setting html alone changed no pixel while the search field beside
      it moved, which is body painting over a correct canvas.
 
-     The shorthand, not background-color: setting the colour alone also changed
-     nothing, and a background-image paints over a background-color no matter
-     how the colour got there. The shorthand resets the image to none in the
-     same declaration. DDG's SERP has no image worth keeping here. */
+     .site-wrapper is the one that actually shows. html and body were both
+     verified painting the base while the page still read #161616, because this
+     wrapper covers them. Walking ancestors up from a pixel in the empty right
+     gutter is what found it — the area ranker had blamed html, which owns the
+     largest box but not the visible pixel. Every ancestor between the wrapper
+     and the result list is transparent, so this one rule reaches all of it. */
   html,
-  body {
+  body,
+  .site-wrapper {
     background: ${r.base} !important;
   }
 }

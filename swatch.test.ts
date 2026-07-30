@@ -289,7 +289,7 @@ test("the web stylesheet fills each site's semantic core", () => {
   // Same exception as Notion's body.notion-body, and the count of it is capped:
   // three element selectors in the whole sheet, one per site that needs one.
   expect(css).toMatch(/ytd-app,\n  ytd-masthead \{\n\s+background-color: #000000 !important;/);
-  expect(css).toMatch(/\n  html,\n  body \{\n\s+background: #000000 !important;/);
+  expect(css).toMatch(/\n  html,\n  body,\n  \.site-wrapper \{\n\s+background: #000000 !important;/);
   // Three declarations, not three selectors: a pane that spans two elements is
   // still one exception. This is the number that must not creep. Counting the
   // shorthand too, or DDG's would stop being counted the moment it changed form.
