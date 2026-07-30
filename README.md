@@ -215,10 +215,16 @@ flowchart LR
   `AppleIconAppearanceTintColor` (`Other`, the slot meaning "not one of the nine
   named colours"), and `AppleIconAppearanceCustomTintColor` (sRGB floats,
   `R G B A`). Writing them is not enough: the Dock caches the configuration and
-  only re-reads when SkyLight posts
-  `kSLSCoordinatedIconAppearanceConfigurationChangeNotificationName`, so swatch
-  posts it with `notifyutil -p`. Without that the setting is right on disk and
-  the screen never changes, which is the exact failure `status` cannot see.
+  re-renders only when SkyLight tells it to. Posting
+  `kSLSCoordinatedIconAppearanceConfigurationChangeNotificationName` with
+  `notifyutil -p` does **not** do it — that is not a Darwin notification, and
+  the keys sit on disk correct while the screen keeps the old tint. What works
+  is calling `save` on `SLSIconAppearanceConfiguration`, which is what System
+  Settings does, reachable from a shell because JXA's ObjC bridge can load a
+  private framework by bundle path and look the class up by name. `killall Dock`
+  also works, visibly. Swatch treats a failure here as fatal rather than a
+  warning, because it is the one step `status` cannot check: the keys are right
+  either way, so a silent failure reads as success forever.
 - **Cider owns its settings file and rewrites it from memory.** Every save
   serialises the whole of `spa-config.yml` from the running app, so an edit made
   while Cider is open is reverted with no error. Swatch checks `pgrep -x Cider`

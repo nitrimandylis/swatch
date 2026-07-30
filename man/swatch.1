@@ -94,8 +94,8 @@ setting each and restoring focus afterwards. Without yabai it sets the focused
 Space only and says so.
 .PP
 On macOS 26 and later swatch also tints every app icon with the palette accent,
-by writing the icon appearance keys in NSGlobalDomain and posting the SkyLight
-notification the Dock listens on. No icon file is touched, and
+by writing the icon appearance keys in NSGlobalDomain and then asking SkyLight to
+apply them, which is what makes the Dock re-render. No icon file is touched, and
 .B "System Settings > Appearance"
 puts it back. Earlier releases have no such setting and the surface is skipped.
 .PP

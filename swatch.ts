@@ -462,6 +462,37 @@ export function rgbTriplet(hex: string): string {
 
 const ciderRunning = () => Bun.spawnSync(["pgrep", "-x", "Cider"]).exitCode === 0;
 
+/**
+ * Make the Dock re-read the icon tint keys.
+ *
+ * The Dock caches the icon appearance and re-renders only when SkyLight tells it
+ * to, so writing the three defaults changes nothing on screen. Two things that
+ * look like they should work and do not: posting
+ * `kSLSCoordinatedIconAppearanceConfigurationChangeNotificationName` with
+ * `notifyutil -p` (it is not a Darwin notification), and writing the keys and
+ * waiting. What does work is what System Settings itself does — call `save` on
+ * the configuration object — reachable from the shell because JXA's ObjC bridge
+ * can load a private framework by bundle path and look the class up by name.
+ * `killall Dock` also works and restarts the Dock in front of you; this does not.
+ *
+ * This throws rather than warning, because it is the one step `status` cannot
+ * check: the keys on disk are correct whether or not the screen ever caught up,
+ * so a silent failure here reads as success forever. That is exactly how this
+ * shipped wrong the first time.
+ */
+function reloadIconAppearance() {
+  if (CHECK) return;
+  const jxa = [
+    'ObjC.import("Foundation");',
+    '$.NSBundle.bundleWithPath("/System/Library/PrivateFrameworks/SkyLight.framework").load;',
+    '$.NSClassFromString("SLSIconAppearanceConfiguration")',
+    ".fetchCurrentIconAppearanceConfiguration.save;",
+  ].join("");
+  const r = Bun.spawnSync(["osascript", "-l", "JavaScript", "-e", jxa]);
+  if (r.exitCode !== 0)
+    throw new Error(`icon tint written but not applied: ${r.stderr.toString().trim()}`);
+}
+
 // ponytail: JSON.stringify quotes the path well enough for AppleScript; theme
 // dirs are slugs, so there are no quotes or backslashes to escape.
 const SET_PICTURE = (p: string) =>
@@ -805,8 +836,7 @@ export const SURFACES: Surface[] = [
      * The three keys are what System Settings itself writes (they are the
      * SLSIconAppearanceConfiguration properties, spelled out); `Other` is the
      * tint-name slot meaning "use the custom colour" rather than one of the nine
-     * named ones. The Dock only re-reads on the SkyLight notification, so the
-     * writes alone change nothing on screen until `notifyutil` posts it.
+     * named ones.
      */
     apply(t) {
       // Darwin 25 is macOS 26, the first release with a tint to set.
@@ -814,7 +844,7 @@ export const SURFACES: Surface[] = [
       putDefault("AppleIconAppearanceTheme", t.meta.variant === "dark" ? "TintedDark" : "TintedLight");
       putDefault("AppleIconAppearanceTintColor", "Other");
       putDefault("AppleIconAppearanceCustomTintColor", tintColor(t.roles.accent));
-      run(["notifyutil", "-p", "kSLSCoordinatedIconAppearanceConfigurationChangeNotificationName"]);
+      reloadIconAppearance();
       return "icons";
     },
   },
