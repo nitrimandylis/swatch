@@ -13,7 +13,7 @@
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
-![surfaces](https://img.shields.io/badge/surfaces-14-e85a9c?style=flat-square&labelColor=111111)
+![surfaces](https://img.shields.io/badge/surfaces-18-e85a9c?style=flat-square&labelColor=111111)
 ![runtime](https://img.shields.io/badge/runtime-bun-4e749e?style=flat-square&labelColor=111111)
 ![deps](https://img.shields.io/badge/runtime_deps-0-4e749e?style=flat-square&labelColor=111111)
 ![license](https://img.shields.io/badge/license-MIT-e85a9c?style=flat-square&labelColor=111111)
@@ -72,6 +72,7 @@ app supports, not on preference.
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
 | 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections. Both are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh` or a gitconfig includes `swatch.gitconfig` |
 | 04 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
+| 05 | **user stylesheet** | the app has no config at all, so swatch themes the web app through the CSS variables it already builds its UI from, loaded by the browser: notion |
 | 05 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
 | 06 | **preferences key** | no config file exists, the setting lives in NSGlobalDomain: the app icon tint (macOS 26 and up) and the system highlight colour, written with `defaults` |
 | 07 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
@@ -90,14 +91,18 @@ Swatch refuses to apply any palette containing the string `TODO`.
 Needs [Bun](https://bun.sh) and macOS. Every themed app is optional, swatch
 skips what isn't installed.
 
-Two surfaces are opt-in, because neither app has a config file whose existence
-would prove you want it themed. Set them up once and swatch keeps them current:
+Three surfaces are opt-in, because none of these apps has a config file whose
+existence would prove you want it themed. Set them up once and swatch keeps them
+current:
 
 ```bash
 mkdir -p ~/.config/fzf   # then, in your shell rc:
 #   [ -s "$HOME/.config/fzf/colors.sh" ] && source "$HOME/.config/fzf/colors.sh"
 
 git config --global include.path '~/.config/git/swatch.gitconfig'
+
+# Notion, themed inside Zen. In your Zen profile's chrome/userContent.css:
+#   @import "swatch-notion.css";
 ```
 
 ```bash
@@ -180,7 +185,7 @@ flowchart LR
     R --> T[templates/]
     T --> F[theme files]
     R --> M[marker blocks]
-    F --> A[14 surfaces]
+    F --> A[18 surfaces]
     M --> A
     R --> D[theme README.md]
 ```

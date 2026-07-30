@@ -12,6 +12,7 @@ import vscodeTpl from "./templates/vscode.json" with { type: "text" };
 import yaziTpl from "./templates/yazi.toml" with { type: "text" };
 import lazygitTpl from "./templates/lazygit.yml" with { type: "text" };
 import zenCssTpl from "./templates/zen-userChrome.css" with { type: "text" };
+import notionCssTpl from "./templates/notion-userContent.css" with { type: "text" };
 
 // Themes are yours, not the tool's: they hold wallpapers and taste, and they
 // outlive any one checkout of this repo. So they live in a normal config
@@ -364,6 +365,9 @@ export function fzfColors(t: Theme): string {
 
 /** The generated gitconfig fragment. A fixed name: the include never changes. */
 export const GIT_FRAGMENT = "swatch.gitconfig";
+
+/** The generated Notion stylesheet, `@import`ed from Zen's userContent.css. */
+export const NOTION_FRAGMENT = "swatch-notion.css";
 
 /**
  * A gitconfig fragment for the colour sections, pulled in by one `[include]`
@@ -920,6 +924,28 @@ export const SURFACES: Surface[] = [
         inject(readFileSync(css, "utf8"), render(zenCssTpl, t), "/*", "*/"),
       );
       return "zen (restart Zen to pick it up)";
+    },
+  },
+  {
+    name: "notion",
+    /**
+     * Notion has no themeable config of its own — the Mac app is Electron and
+     * both third-party wrappers are dead — so this themes the web app inside
+     * Zen instead, via the CSS variables Notion already builds its UI from.
+     *
+     * Opt-in by `@import`, the same shape as git's include: a Zen profile
+     * existing does not mean you want Notion restyled, and the generated file's
+     * name never changes so there is no pointer line to rewrite.
+     */
+    apply(t) {
+      const dir = zenProfile();
+      if (!dir) return null;
+      const chrome = join(dir, "chrome");
+      const entry = join(chrome, "userContent.css");
+      if (!existsSync(entry) || !readFileSync(entry, "utf8").includes(NOTION_FRAGMENT))
+        return null;
+      put(join(chrome, NOTION_FRAGMENT), render(notionCssTpl, t));
+      return "notion (reload any open Notion tab)";
     },
   },
   {

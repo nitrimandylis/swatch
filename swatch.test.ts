@@ -193,6 +193,33 @@ test("every template renders to a parseable document", () => {
     expect(() => Bun.TOML.parse(render(readFileSync(join(HERE, "templates", f), "utf8"), t))).not.toThrow();
 });
 
+test("the notion stylesheet fills the semantic core without mistaking AccPri for the accent", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  const css = render(readFileSync(join(HERE, "templates", "notion-userContent.css"), "utf8"), t);
+  expect(css).not.toContain("${");
+
+  // Notion's --c-*AccPri is a neutral emphasis step, not a brand accent: in
+  // light mode --c-texAccPri ships as #5f5e59, a grey. Putting roles.accent
+  // here turns every sidebar label the accent colour.
+  expect(css).toContain("--c-texAccPri: #eeeeee;");
+  expect(css).not.toMatch(/--c-(tex|ico)AccPri: #ff00aa/);
+
+  // The accent belongs to the UI-blue family, which is what Notion seeds its
+  // primary controls from.
+  expect(css).toContain("--c-palUiBlu600: #ff00aa;");
+
+  // --c-texSec carries column headers and sidebar section labels, not comments.
+  // roles.muted there measured 1.69:1 against nord's base — unreadable. It stays
+  // on the dim tiers only.
+  expect(css).toContain("--c-texSec: #c5d3e0;"); // ansi.white[0]
+  expect(css).not.toContain("--c-texSec: #888888;"); // roles.muted
+  expect(css).toContain("--c-texTer: #888888;");
+
+  // <body> paints a literal no variable reaches. Without this rule a quarter of
+  // the painted area stays Notion grey while every variable reads correct.
+  expect(css).toMatch(/body\.notion-body \{\n\s+background-color: #000000 !important;/);
+});
+
 test("a theme loads off disk", () => {
   expect(listThemes()).toContain("moss");
   const t = loadTheme("moss");

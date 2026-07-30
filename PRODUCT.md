@@ -4,7 +4,7 @@
 
 A CLI that applies one palette across every themed surface on a macOS desktop.
 A theme is a directory: `palette.toml` plus a `wallpapers/` pool. `swatch use
-<theme>` writes fourteen surfaces from it, and picks from the pool with fzf when
+<theme>` writes eighteen surfaces from it, and picks from the pool with fzf when
 there is more than one picture to choose between.
 
 The problem it solves is duplication. Before this, the hex `#e85a9c` appeared in
@@ -43,7 +43,7 @@ same time, which is what made the old name wrong rather than merely imprecise.
 
 ## State
 
-Working. Seventeen surfaces, 44 tests, compiled to `~/.bun/bin/swatch`. Switching
+Working. Eighteen surfaces, 45 tests, compiled to `~/.bun/bin/swatch`. Switching
 themes has been exercised end to end: Batman Jazz → Firewatch moved every
 pointer and every injected block, and `status` confirmed every installed
 surface back in sync.
@@ -51,7 +51,7 @@ surface back in sync.
 | surface | mechanism |
 |---|---|
 | ghostty, btop, glow, zed, vscode, yazi | pointer flip |
-| fzf, git | generated file, static include, opt-in |
+| fzf, git, notion | generated file, static include, opt-in |
 | borders, cava, lazygit, zen | marker injection |
 | cider | key edit, no theme file |
 | icons | preferences key, macOS 26 and up |

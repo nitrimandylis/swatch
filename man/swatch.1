@@ -93,16 +93,19 @@ API: its "desktop" is a display. Swatch therefore walks the Spaces with
 setting each and restoring focus afterwards. Without yabai it sets the focused
 Space only and says so.
 .PP
-Two surfaces are opt-in, because neither app keeps a config file whose presence
-would mean "theme me". Swatch writes
+Three surfaces are opt-in, because none of these apps keeps a config file whose
+presence would mean "theme me". Swatch writes
 \fI~/.config/fzf/colors.sh\fR only when
 \fI~/.config/fzf\fR exists, and
-\fI~/.config/git/swatch.gitconfig\fR only when a gitconfig already includes it:
+\fI~/.config/git/swatch.gitconfig\fR only when a gitconfig already includes it, and
+\fIswatch\-notion.css\fR in Zen's chrome directory only when
+\fIuserContent.css\fR imports it:
 .IP
 .EX
 mkdir \-p ~/.config/fzf
 # in your shell rc: source ~/.config/fzf/colors.sh
 git config \-\-global include.path '~/.config/git/swatch.gitconfig'
+# in Zen's chrome/userContent.css: @import "swatch\-notion.css";
 .EE
 .PP
 The fzf colours reach a shell the next time it starts, not the one that ran
