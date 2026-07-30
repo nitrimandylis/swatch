@@ -47,6 +47,7 @@
   // colour it paints. Nested boxes double-count on purpose: an opaque child
   // really does cover its parent, and the ranking only needs relative weight.
   const bg = new Map(), fg = new Map();
+  const biggest = new Map(); // colour -> [area, element], for "what paints this"
   const bump = (m, c, a) => m.set(c, (m.get(c) ?? 0) + a);
   let painted = 0;
   for (const el of document.querySelectorAll("*")) {
@@ -57,8 +58,10 @@
     if (a < 1) continue;
     painted = Math.max(painted, a);
     const cs = getComputedStyle(el);
-    if (cs.backgroundColor && cs.backgroundColor !== "rgba(0, 0, 0, 0)")
+    if (cs.backgroundColor && cs.backgroundColor !== "rgba(0, 0, 0, 0)") {
       bump(bg, cs.backgroundColor, a);
+      if (a > (biggest.get(cs.backgroundColor)?.[0] ?? 0)) biggest.set(cs.backgroundColor, [a, el]);
+    }
     // Only leaves carry text worth measuring; a wrapper's colour is inherited
     // by children that are counted on their own.
     if (!el.firstElementChild && el.textContent.trim()) bump(fg, cs.color, a);
@@ -115,7 +118,35 @@
     where += `  ${name}\n${hits.map((h) => `    ${h}\n`).join("") || "    (only on the root)\n"}`;
   }
 
-  const out = `${location.host}\n` + report("background", bg) + report("text", fg) + where;
+  // What actually paints the top background, as authored. A colour maps to many
+  // variables holding the same value, and only one of them is the one the page
+  // reads — override the wrong one and the sheet applies, the variable changes,
+  // and the pixel does not move. Computed style resolves var() away, so the
+  // authored declaration has to come off the rule.
+  const rules = [];
+  const walk = (list) => {
+    for (const rule of list) {
+      if (rule.cssRules) walk(rule.cssRules);
+      else if (rule.selectorText && rule.style) rules.push(rule);
+    }
+  };
+  for (const sheet of document.styleSheets) {
+    try { walk(sheet.cssRules); } catch { /* cross-origin sheet, unreadable */ }
+  }
+  let paints = `\nwhat paints the top background\n`;
+  const el = biggest.get(top?.[0])?.[1];
+  if (!el) paints += "  (nothing found)\n";
+  else {
+    paints += `  element: ${path(el)}\n`;
+    for (const rule of rules) {
+      let m = false;
+      try { m = el.matches(rule.selectorText); } catch { continue; }
+      const v = rule.style.getPropertyValue("background") || rule.style.getPropertyValue("background-color");
+      if (m && v) paints += `    ${rule.selectorText.slice(0, 60)}  {  ${v.trim().slice(0, 80)}  }\n`;
+    }
+  }
+
+  const out = `${location.host}\n` + report("background", bg) + report("text", fg) + where + paints;
   console.log(out);
   // Firefox and Chrome both expose copy() in the console. Straight to clipboard.
   try { copy(out); console.log("(copied to clipboard)"); } catch {}
