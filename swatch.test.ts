@@ -246,6 +246,10 @@ test("the web stylesheet fills each site's semantic core", () => {
   expect(css).not.toMatch(/--yt-spec-[\w-]*\s*:/);
   // Build-hashed properties change between deploys.
   expect(css).not.toMatch(/--t[0-9a-f]{16}/);
+  // ytd-app paints the page and redefines the baseline set below <html>, so a
+  // block scoped to :root wins on <html> and changes no pixel. Measured.
+  expect(css).toMatch(/ytd-app \{/);
+  expect(css).toContain("--yt-deprecated-general-background-a: #000000 !important;");
 
   // --- wikipedia ---
   expect(css).toContain("--background-color-base: #000000 !important;");
@@ -274,6 +278,11 @@ test("the web stylesheet fills each site's semantic core", () => {
   expect(css).toContain("--theme-col-txt-snippet: #eeeeee !important;");
   expect(css).toContain("--theme-col-txt-title: #ff00aa !important;"); // result titles
   expect(css).toContain("--theme-col-txt-button-ghostsecondary: #c5d3e0 !important;");
+  // --theme-col-bg-page alone moved nothing: <html> paints from this group
+  // instead, and the newer --sds-color-* system has to move with it.
+  expect(css).toContain("--theme-col-bg-page-alt-3: #000000 !important;");
+  expect(css).toContain("--sds-color-background-01: #000000 !important;");
+  expect(css).toContain("--sds-color-text-01: #eeeeee !important;");
 
   // --- notion calendar ---
   // Cron renamed. Zero --c-* properties on the page; the Notion block's names

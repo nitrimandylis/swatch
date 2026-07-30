@@ -127,24 +127,49 @@
 
 @-moz-document domain("youtube.com") {
   /* --yt-sys-color-baseline--* is the live family; --yt-spec-* is extinct.
-     Declared on html[dark]; body and ytd-app inherit, and inherited custom
-     properties cross shadow boundaries, so this reaches all of ytd-app without
-     one selector inside it.
+
+     ytd-app is in the selector because it PAINTS the page and redefines the
+     baseline set below <html>. Measured: with the block scoped to :root alone,
+     getComputedStyle(html) read our base while ytd-app still painted #0f0f0f
+     and the variable still resolved to #0f0f0f further down the tree. An
+     override that lost to a descendant is indistinguishable from a variable
+     nobody reads — both apply cleanly and change nothing.
+
+     The --yt-deprecated-* names are set alongside: they hold the same #0f0f0f
+     and #f1f1f1 the live family does, and the older widgets still read them.
+
      Not set, deliberately: --outline and --additive-background are
      rgba(255,255,255,0.x) translucent layers that an opaque hex would turn into
      solid blocks; text-error/-warning/-complete are status colours, i.e.
-     content; wordmark-text is the YouTube logo. Nothing references the 95
-     build-hashed --t<hex> properties — they change between deploys. */
+     content; wordmark-text is the YouTube logo; static-black/static-white and
+     inverted-background are the fixed poles inversion is measured against.
+     Nothing references the 95 build-hashed --t<hex> properties — they change
+     between deploys. */
   :root,
   html[dark],
-  html[light] {
+  html[light],
+  body,
+  ytd-app {
+    /* ponytail: temporary. Reads back from the page console as proof this block
+       applied at all — the one thing neither `status` nor a screenshot can see.
+       Delete once YouTube is verified. */
+    --swatch-canary: youtube !important;
     --yt-sys-color-baseline--base-background: ${r.base} !important;
+    --yt-deprecated-general-background-a: ${r.base} !important;
+    --yt-deprecated-general-background-b: ${r.base} !important;
+    --yt-deprecated-general-background-c: ${r.base} !important;
+    --app-drawer-content-container-background-color: ${r.base} !important;
     --yt-sys-color-baseline--raised-background: ${r.surface} !important;
     --yt-sys-color-baseline--menu-background: ${r.surface} !important;
+    --ytd-searchbox-background: ${r.surface} !important;
+    --yt-deprecated-dark-surface-100: ${r.surface} !important;
     --yt-sys-color-baseline--text-primary: ${r.text} !important;
+    --yt-deprecated-white-3: ${r.text} !important;
     --yt-sys-color-baseline--text-secondary: ${a.white[0]} !important;
+    --yt-deprecated-grey-2: ${a.white[0]} !important;
     --yt-sys-color-baseline--text-disabled: ${r.muted} !important;
     --yt-sys-color-baseline--call-to-action: ${r.accent} !important;
+    --yt-deprecated-light-blue: ${r.accent} !important;
     --yt-sys-color-baseline--outline-opaque: ${r.overlay} !important;
   }
 }
@@ -200,19 +225,63 @@
      stores them in cookies with nothing readable back, so `status` would go
      blind — the Raycast rejection. Driven through variables instead, and those
      settings are left alone.
-     Ceiling to expect: 25.8% of painted text is a literal rgba(255,255,255,0.9)
-     that no variable reaches, so this block tops out near 74% text coverage.
-     That is the site, not a bad apply. */
+     Two design systems coexist and both have to move: --theme-col-* carries the
+     page, --sds-color-* is the newer one. They are not aliases — measured,
+     --theme-col-bg-page alone changed nothing visible, because <html> paints
+     from the -alt-3 / -header / sds-background-01 group instead. Every name in
+     one tier below holds the identical colour on the live site, so setting them
+     together flattens nothing that was not already flat.
+
+     The earlier note that 25.8% of text was an unreachable literal was wrong:
+     rgba(255,255,255,0.9) is --sds-color-text-01, and it is 27.4% of painted
+     text. It carries alpha and is overridden anyway — the no-alpha rule is
+     there to protect translucent hairlines and washes, not text. */
   :root,
-  .body--serp {
+  html,
+  body {
+    /* ponytail: temporary, same as YouTube's. Delete once verified. */
+    --swatch-canary: duckduckgo !important;
+
+    /* the page */
     --theme-col-bg-page: ${r.base} !important;
+    --theme-col-bg-page-alt-3: ${r.base} !important;
+    --theme-col-bg-header: ${r.base} !important;
+    --theme-col-metabar-bg: ${r.base} !important;
+    --sds-color-background-01: ${r.base} !important;
+    --sds-color-palette-gray-95: ${r.base} !important;
+    --col-gray-95: ${r.base} !important;
+
+    /* raised: modals, cards, the menu */
     --theme-col-bg-modal: ${r.surface} !important;
+    --theme-col-bg-header-modal: ${r.surface} !important;
+    --theme-col-bg-page-alt-2: ${r.surface} !important;
     --result-item-bg: ${r.surface} !important;
+    --sds-color-background-02: ${r.surface} !important;
+    --sds-color-palette-gray-90: ${r.surface} !important;
+    --col-gray-90: ${r.surface} !important;
+
+    /* separators, inputs, the search field */
+    --theme-col-bg-page-alt-1: ${r.overlay} !important;
+    --theme-col-separator: ${r.overlay} !important;
+    --theme-col-bg-search: ${r.overlay} !important;
+    --theme-col-bg-textarea: ${r.overlay} !important;
+    --sds-color-background-03: ${r.overlay} !important;
+    --col-gray-85: ${r.overlay} !important;
+
+    /* text */
     --theme-col-txt-snippet: ${r.text} !important;
     --theme-col-txt-header-link: ${r.text} !important;
     --theme-col-txt-card-body: ${r.text} !important;
-    --theme-col-txt-button-ghostsecondary: ${a.white[0]} !important;
+    --sds-color-text-01: ${r.text} !important;
+    --sds-color-text-on-dark-01: ${r.text} !important;
     --theme-col-txt-title: ${r.accent} !important;
+    /* result URLs and the secondary tier: 18.4% of painted text between them */
+    --theme-col-txt-url: ${a.white[0]} !important;
+    --theme-col-txt-url-domain: ${a.white[0]} !important;
+    --theme-col-txt-url-path: ${a.white[0]} !important;
+    --theme-col-txt-button-ghostsecondary: ${a.white[0]} !important;
+    --sds-color-text-03: ${a.white[0]} !important;
+    --sds-color-text-on-dark-02: ${a.white[0]} !important;
   }
 }
 
