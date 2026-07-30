@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -105,6 +105,13 @@ test("btop theme covers every key btop reads", () => {
 test("argb prefixes alpha", () => {
   expect(argb("#e85a9c")).toBe("0xffe85a9c");
   expect(argb("#e85a9c", "80")).toBe("0x80e85a9c");
+});
+
+test("tintColor is sRGB floats at six decimals", () => {
+  // The written string has to match what macOS reads back, or `status` reports
+  // drift on a correct setting forever.
+  expect(tintColor("#ff1f6b")).toBe("1.000000 0.121569 0.419608 1.000000");
+  expect(tintColor("#000000")).toBe("0.000000 0.000000 0.000000 1.000000");
 });
 
 test("inject replaces the marked block and keeps indentation", () => {

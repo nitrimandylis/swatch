@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { readdirSync, existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
-import { homedir } from "node:os";
+import { homedir, release } from "node:os";
 
 // Colour documents live in templates/ rather than in this file: they are long,
 // they must stay diffable against the originals, and `with { type: "text" }`
@@ -162,6 +162,21 @@ function run(cmd: string[]) {
   if (!CHECK) Bun.spawnSync(cmd);
 }
 
+/**
+ * `put` for a preferences key instead of a file. NSGlobalDomain is a binary
+ * plist that cfprefsd caches in memory, so `defaults` is the only safe writer —
+ * editing the file behind its back is reverted on the next flush.
+ */
+function putDefault(key: string, value: string) {
+  const cur = Bun.spawnSync(["defaults", "read", "-g", key]);
+  const now = cur.exitCode === 0 ? cur.stdout.toString().trim() : "";
+  if (CHECK) {
+    if (now !== value) PENDING.push(`-g ${key}`);
+    return;
+  }
+  if (now !== value) Bun.spawnSync(["defaults", "write", "-g", key, "-string", value]);
+}
+
 /** Swap the one line matching `re`. Hard-fails unless the match count is exactly 1. */
 export function replaceLine(text: string, re: RegExp, line: string): string {
   const found = text.match(new RegExp(re.source, "gm"));
@@ -219,6 +234,12 @@ export function render(tpl: string, t: Theme): string {
 }
 
 const bare = (hex: string) => hex.slice(1);
+
+/** `R G B A`, sRGB floats at six decimals — what the macOS icon tint stores. */
+export function tintColor(hex: string): string {
+  const at = (i: number) => (parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255).toFixed(6);
+  return `${at(0)} ${at(1)} ${at(2)} 1.000000`;
+}
 
 /** 0xAARRGGBB — what borders and sketchybar want. */
 export const argb = (hex: string, alpha = "ff") => `0x${alpha}${bare(hex)}`;
@@ -746,6 +767,29 @@ export const SURFACES: Surface[] = [
       return ciderRunning()
         ? "cider (QUIT AND REOPEN CIDER — it overwrites this file while running)"
         : "cider";
+    },
+  },
+  {
+    name: "icons",
+    /**
+     * macOS 26 tints every app icon from one colour. It is a system setting, not
+     * a Dock one — Launchpad and Spotlight follow it too — so no icon file is
+     * touched and nothing has to be restored when the theme changes.
+     *
+     * The three keys are what System Settings itself writes (they are the
+     * SLSIconAppearanceConfiguration properties, spelled out); `Other` is the
+     * tint-name slot meaning "use the custom colour" rather than one of the nine
+     * named ones. The Dock only re-reads on the SkyLight notification, so the
+     * writes alone change nothing on screen until `notifyutil` posts it.
+     */
+    apply(t) {
+      // Darwin 25 is macOS 26, the first release with a tint to set.
+      if (Number(release().split(".")[0]) < 25) return null;
+      putDefault("AppleIconAppearanceTheme", t.meta.variant === "dark" ? "TintedDark" : "TintedLight");
+      putDefault("AppleIconAppearanceTintColor", "Other");
+      putDefault("AppleIconAppearanceCustomTintColor", tintColor(t.roles.accent));
+      run(["notifyutil", "-p", "kSLSCoordinatedIconAppearanceConfigurationChangeNotificationName"]);
+      return "icons";
     },
   },
 ];

@@ -13,7 +13,7 @@
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
-![surfaces](https://img.shields.io/badge/surfaces-13-e85a9c?style=flat-square&labelColor=111111)
+![surfaces](https://img.shields.io/badge/surfaces-14-e85a9c?style=flat-square&labelColor=111111)
 ![runtime](https://img.shields.io/badge/runtime-bun-4e749e?style=flat-square&labelColor=111111)
 ![deps](https://img.shields.io/badge/runtime_deps-0-4e749e?style=flat-square&labelColor=111111)
 ![license](https://img.shields.io/badge/license-MIT-e85a9c?style=flat-square&labelColor=111111)
@@ -55,11 +55,12 @@ Batman Jazz
   ✓ lazygit
   ✓ zen (restart Zen to pick it up)
   ✓ cider
+  ✓ icons
 ```
 
 ## 🔧 The surfaces
 
-Four mechanisms cover everything. Which one a surface gets depends on what the
+Five mechanisms cover everything. Which one a surface gets depends on what the
 app supports, not on preference.
 
 | | mechanism | what it actually does |
@@ -68,7 +69,8 @@ app supports, not on preference.
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
 | 03 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
 | 04 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
-| 05 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
+| 05 | **preferences key** | no config file exists, the setting lives in NSGlobalDomain: the app icon tint (macOS 26 and up), written with `defaults` |
+| 06 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
 
 | | command | what it actually does |
 |---|---|---|
@@ -164,7 +166,7 @@ flowchart LR
     R --> T[templates/]
     T --> F[theme files]
     R --> M[marker blocks]
-    F --> A[13 surfaces]
+    F --> A[14 surfaces]
     M --> A
     R --> D[theme README.md]
 ```
@@ -208,6 +210,15 @@ flowchart LR
   `#navigator-toolbox` and `.browserContainer` leaves the workspace gradient
   showing down the sides of the window. Setting the variable instead means every
   colour Zen derives with `color-mix()` follows along.
+- **The icon tint is three keys and a notification.** macOS 26 stores it in
+  NSGlobalDomain as `AppleIconAppearanceTheme` (`TintedDark`/`TintedLight`),
+  `AppleIconAppearanceTintColor` (`Other`, the slot meaning "not one of the nine
+  named colours"), and `AppleIconAppearanceCustomTintColor` (sRGB floats,
+  `R G B A`). Writing them is not enough: the Dock caches the configuration and
+  only re-reads when SkyLight posts
+  `kSLSCoordinatedIconAppearanceConfigurationChangeNotificationName`, so swatch
+  posts it with `notifyutil -p`. Without that the setting is right on disk and
+  the screen never changes, which is the exact failure `status` cannot see.
 - **Cider owns its settings file and rewrites it from memory.** Every save
   serialises the whole of `spa-config.yml` from the running app, so an edit made
   while Cider is open is reverted with no error. Swatch checks `pgrep -x Cider`
