@@ -96,3 +96,150 @@
     background-color: ${r.base} !important;
   }
 }
+
+@-moz-document domain("github.com"), domain("githubusercontent.com") {
+  /* Primer. The legacy --color-canvas- and --color-fg- family is NOT set: it
+     resolves to the empty string on current GitHub, the migration is finished,
+     and setting it would be noise.
+     Diff, syntax-highlight and label colours are content and stay GitHub's.
+     Matching on attribute presence, not value — this profile runs
+     data-dark-theme="dark_tritanopia".
+     --borderColor-muted is deliberately absent: it measures #3d444db3, a
+     translucent hairline, and an opaque override turns every muted border
+     solid. */
+  :root,
+  [data-color-mode],
+  [data-color-mode][data-light-theme],
+  [data-color-mode][data-dark-theme] {
+    --bgColor-default: ${r.base} !important;
+    --bgColor-muted: ${r.surface} !important;
+    --bgColor-inset: ${r.base} !important;
+    --fgColor-default: ${r.text} !important;
+    /* 27.2% of GitHub's painted text: file lists, commit messages, timestamps.
+       roles.muted measures 1.69:1 on nord and would take a quarter of the page
+       with it. */
+    --fgColor-muted: ${a.white[0]} !important;
+    --fgColor-accent: ${r.accent} !important;
+    --fgColor-link: ${r.accent} !important;
+    --borderColor-default: ${r.overlay} !important;
+  }
+}
+
+@-moz-document domain("youtube.com") {
+  /* --yt-sys-color-baseline--* is the live family; --yt-spec-* is extinct.
+     Declared on html[dark]; body and ytd-app inherit, and inherited custom
+     properties cross shadow boundaries, so this reaches all of ytd-app without
+     one selector inside it.
+     Not set, deliberately: --outline and --additive-background are
+     rgba(255,255,255,0.x) translucent layers that an opaque hex would turn into
+     solid blocks; text-error/-warning/-complete are status colours, i.e.
+     content; wordmark-text is the YouTube logo. Nothing references the 95
+     build-hashed --t<hex> properties — they change between deploys. */
+  :root,
+  html[dark],
+  html[light] {
+    --yt-sys-color-baseline--base-background: ${r.base} !important;
+    --yt-sys-color-baseline--raised-background: ${r.surface} !important;
+    --yt-sys-color-baseline--menu-background: ${r.surface} !important;
+    --yt-sys-color-baseline--text-primary: ${r.text} !important;
+    --yt-sys-color-baseline--text-secondary: ${a.white[0]} !important;
+    --yt-sys-color-baseline--text-disabled: ${r.muted} !important;
+    --yt-sys-color-baseline--call-to-action: ${r.accent} !important;
+    --yt-sys-color-baseline--outline-opaque: ${r.overlay} !important;
+  }
+}
+
+@-moz-document domain("wikipedia.org"), domain("wiktionary.org"),
+               domain("wikimedia.org"), domain("wikidata.org") {
+  /* Vector 2022 on Wikimedia Codex tokens; every project shares them, so one
+     block covers the family. Older skins do not use tokens and do not theme —
+     accepted, not chased with element selectors.
+     --color-visited is NOT set: links are 36.5% of painted text here, and
+     collapsing visited into the accent erases the read/unread distinction the
+     navigation depends on. */
+  :root,
+  html.skin-theme-clientpref-day,
+  html.skin-theme-clientpref-night,
+  html.skin-theme-clientpref-os {
+    --background-color-base: ${r.base} !important;
+    --background-color-neutral-subtle: ${r.surface} !important;
+    --background-color-neutral: ${r.surface} !important;
+    --background-color-interactive: ${r.surface} !important;
+    --background-color-interactive-subtle: ${r.surface} !important;
+    --color-base: ${r.text} !important;
+    --color-emphasized: ${r.text} !important;
+    --color-subtle: ${a.white[0]} !important;
+    --color-base--subtle: ${a.white[0]} !important;
+    --color-disabled: ${r.muted} !important;
+    --color-progressive: ${r.accent} !important;
+    --border-color-base: ${r.overlay} !important;
+    --border-color-subtle: ${r.overlay} !important;
+  }
+}
+
+@-moz-document domain("vercel.com") {
+  /* Geist. --ds-background-200 is the page (88.1% of painted area) and -100 is
+     the raised colour (11.7%) — that is the opposite of what the names suggest,
+     and getting it backwards survives a screenshot while reading inside-out.
+     --ds-gray-* is a numbered ramp, not semantic names. Only 800/900/1000 paint
+     text; 100-400 carry borders, dividers and hover states at ~0.1% each.
+     Flattening those erases every card edge while the at-rest page still looks
+     correct, so they are left alone. */
+  :root {
+    --ds-background-200: ${r.base} !important;
+    --ds-background-100: ${r.surface} !important;
+    --ds-gray-1000: ${r.text} !important;
+    --ds-gray-900: ${a.white[0]} !important;
+    --ds-gray-800: ${r.muted} !important;
+    --ds-blue-900: ${r.accent} !important;
+  }
+}
+
+@-moz-document domain("duckduckgo.com") {
+  /* DDG's own Settings > Appearance can set these colours natively, but it
+     stores them in cookies with nothing readable back, so `status` would go
+     blind — the Raycast rejection. Driven through variables instead, and those
+     settings are left alone.
+     Ceiling to expect: 25.8% of painted text is a literal rgba(255,255,255,0.9)
+     that no variable reaches, so this block tops out near 74% text coverage.
+     That is the site, not a bad apply. */
+  :root,
+  .body--serp {
+    --theme-col-bg-page: ${r.base} !important;
+    --theme-col-bg-modal: ${r.surface} !important;
+    --result-item-bg: ${r.surface} !important;
+    --theme-col-txt-snippet: ${r.text} !important;
+    --theme-col-txt-header-link: ${r.text} !important;
+    --theme-col-txt-card-body: ${r.text} !important;
+    --theme-col-txt-button-ghostsecondary: ${a.white[0]} !important;
+    --theme-col-txt-title: ${r.accent} !important;
+  }
+}
+
+@-moz-document domain("calendar.notion.so") {
+  /* Notion Calendar is Cron renamed: 734 custom properties and not one --c-*.
+     Nothing from the Notion block above applies here.
+     Every name has a -contr- twin holding the same value; both are set or the
+     high-contrast mode diverges.
+     Its text tiers are rgba(255,255,255,alpha) rather than distinct hues, and
+     they share values with the stroke variables — but they are separate names,
+     and driving both from one role is what makes the hour grid vanish.
+     Event blocks take their colours from the user's own calendars and stay
+     theirs, like Notion's content-colour ramps. */
+  :root {
+    --nds-surface-page: ${r.base} !important;
+    --nds-surface-contr-page: ${r.base} !important;
+    --nds-gray-50: ${r.base} !important;
+    --nds-surface-wash: ${r.surface} !important;
+    --nds-surface-contr-wash: ${r.surface} !important;
+    --nds-gray-100: ${r.surface} !important;
+    --nds-text-primary: ${r.text} !important;
+    --nds-text-contr-primary: ${r.text} !important;
+    --nds-text-secondary: ${a.white[0]} !important;
+    --nds-text-contr-secondary: ${a.white[0]} !important;
+    --nds-text-tertiary: ${r.muted} !important;
+    --nds-text-contr-tertiary: ${r.muted} !important;
+    --nds-stroke-grayPrimary: ${r.overlay} !important;
+    --nds-stroke-lightGrayPrimary: ${r.overlay} !important;
+  }
+}

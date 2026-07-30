@@ -220,6 +220,73 @@ test("the web stylesheet fills each site's semantic core", () => {
   // the painted area stays Notion grey while every variable reads correct.
   expect(css).toMatch(/body\.notion-body \{\n\s+background-color: #000000 !important;/);
 
+  // --- github ---
+  expect(css).toContain("--bgColor-default: #000000 !important;");
+  expect(css).toContain("--bgColor-muted: #111111 !important;");
+  expect(css).toContain("--fgColor-default: #eeeeee !important;");
+  expect(css).toContain("--fgColor-accent: #ff00aa !important;");
+  // 27.2% of GitHub's painted text is --fgColor-muted: file lists, commit
+  // messages, timestamps. roles.muted measures 1.69:1 on nord and would take a
+  // quarter of the page with it.
+  expect(css).toContain("--fgColor-muted: #c5d3e0 !important;"); // ansi.white[0]
+  expect(css).not.toContain("--fgColor-muted: #888888"); // roles.muted
+  // The legacy family is dead on current GitHub — setting it is noise.
+  expect(css).not.toContain("--color-canvas-default:");
+  expect(css).not.toContain("--color-fg-default:");
+
+  // --- youtube ---
+  expect(css).toContain("--yt-sys-color-baseline--base-background: #000000 !important;");
+  expect(css).toContain("--yt-sys-color-baseline--raised-background: #111111 !important;");
+  expect(css).toContain("--yt-sys-color-baseline--text-primary: #eeeeee !important;");
+  expect(css).toContain("--yt-sys-color-baseline--call-to-action: #ff00aa !important;");
+  expect(css).toContain("--yt-sys-color-baseline--text-secondary: #c5d3e0 !important;");
+  // --yt-spec-* was removed by YouTube; a block naming it applies and does
+  // nothing, which is the failure mode this whole surface has to avoid. Matched
+  // as a declaration, not a substring — the comments name it to say it is dead.
+  expect(css).not.toMatch(/--yt-spec-[\w-]*\s*:/);
+  // Build-hashed properties change between deploys.
+  expect(css).not.toMatch(/--t[0-9a-f]{16}/);
+
+  // --- wikipedia ---
+  expect(css).toContain("--background-color-base: #000000 !important;");
+  expect(css).toContain("--color-base: #eeeeee !important;");
+  expect(css).toContain("--color-progressive: #ff00aa !important;");
+  expect(css).toContain("--color-subtle: #c5d3e0 !important;"); // ansi.white[0]
+  // Links are 36.5% of painted text here. Visited stays Wikipedia's so the
+  // read/unread distinction survives — decided deliberately, not an omission.
+  expect(css).not.toContain("--color-visited:");
+
+  // --- vercel ---
+  // 200 is the page, 100 is raised. Inverting these reads inside-out and still
+  // screenshots plausibly.
+  expect(css).toContain("--ds-background-200: #000000 !important;");
+  expect(css).toContain("--ds-background-100: #111111 !important;");
+  expect(css).toContain("--ds-gray-1000: #eeeeee !important;");
+  expect(css).toContain("--ds-blue-900: #ff00aa !important;");
+  expect(css).toContain("--ds-gray-900: #c5d3e0 !important;"); // 38% of text
+  // The middle of the ramp carries borders, dividers and hover states.
+  expect(css).not.toContain("--ds-gray-100:");
+  expect(css).not.toContain("--ds-gray-200:");
+  expect(css).not.toContain("--ds-gray-400:");
+
+  // --- duckduckgo ---
+  expect(css).toContain("--theme-col-bg-page: #000000 !important;");
+  expect(css).toContain("--theme-col-txt-snippet: #eeeeee !important;");
+  expect(css).toContain("--theme-col-txt-title: #ff00aa !important;"); // result titles
+  expect(css).toContain("--theme-col-txt-button-ghostsecondary: #c5d3e0 !important;");
+
+  // --- notion calendar ---
+  // Cron renamed. Zero --c-* properties on the page; the Notion block's names
+  // would apply cleanly and do nothing.
+  expect(css).toContain("--nds-surface-page: #000000 !important;");
+  expect(css).toContain("--nds-surface-wash: #111111 !important;");
+  expect(css).toContain("--nds-text-primary: #eeeeee !important;");
+  expect(css).toContain("--nds-text-secondary: #c5d3e0 !important;"); // 36.2% of text
+  // Strokes are the hour grid and take overlay, not the secondary text role.
+  expect(css).toContain("--nds-stroke-grayPrimary: #222222 !important;");
+  // The -contr- twins must move together with their base names.
+  expect(css).toContain("--nds-text-contr-primary: #eeeeee !important;");
+
   // --- every block ---
   // userContent.css is a user-origin sheet, which loses to author styles for
   // normal declarations. Every declaration needs !important or the site's own
@@ -228,6 +295,15 @@ test("the web stylesheet fills each site's semantic core", () => {
   const decls = css.match(/^\s+--[A-Za-z0-9-]+:[^;]+;/gm) ?? [];
   expect(decls.length).toBeGreaterThan(20);
   expect(decls.filter((d) => !d.includes("!important"))).toEqual([]);
+
+  // A comment that closes early takes the rest of its block out of the sheet
+  // and the file still looks fine in a diff — a variable name ending in -*
+  // followed by / does it. Strip every balanced comment; anything left over is
+  // an unbalanced marker. Braces must balance for the same reason.
+  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  expect(stripped).not.toContain("*/");
+  expect(stripped).not.toContain("/*");
+  expect(stripped.split("{").length).toBe(stripped.split("}").length);
 });
 
 test("a theme loads off disk", () => {
