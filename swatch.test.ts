@@ -288,7 +288,11 @@ test("the web stylesheet fills each site's semantic core", () => {
   // by overriding every variable holding that colour and watching nothing move.
   // Same exception as Notion's body.notion-body, and the count of it is capped:
   // three element selectors in the whole sheet, one per site that needs one.
-  expect(css).toMatch(/ytd-app,\n  ytd-masthead \{\n\s+background-color: #000000 !important;/);
+  expect(css).toMatch(/\n  html,\n  ytd-app,\n  ytd-masthead \{\n\s+background-color: #000000 !important;/);
+  // The chips and the selected sidebar entry are rgba(255,255,255,0.1) and stay
+  // that way: they already tint with the base under them, and the variable
+  // behind them paints every hover wash on the site.
+  expect(css).not.toContain("--yt-sys-color-baseline--additive-background:");
   expect(css).toMatch(/\n  html,\n  body,\n  \.site-wrapper,\n  \.header-wrap,\n  \[class\*="minimal-homepage_"\] \{\n\s+background: #000000 !important;/);
   // Prefix match, never the whole class: DDG's homepage panes are CSS modules
   // and the __jbnsx suffix rotates on every deploy.
@@ -299,49 +303,7 @@ test("the web stylesheet fills each site's semantic core", () => {
   // variable holding its colour and watching nothing move. Four is the number
   // that must not creep — YouTube and DuckDuckGo are literal-heavy in a way
   // Notion was not, and this assertion is what keeps that from becoming normal.
-  //
-  // ManageBac is measured separately below and excluded here on purpose. It is
-  // the one site whose paint is literal by construction rather than by
-  // accident, and folding it into this number would raise the cap for everyone
-  // and retire the invariant it exists to defend.
-  const mbStart = css.indexOf('@-moz-document domain("managebac.com")');
-  const mbEnd = css.indexOf("@-moz-document", mbStart + 1);
-  const managebac = css.slice(mbStart, mbEnd);
-  const rest = css.slice(0, mbStart) + css.slice(mbEnd);
-  expect((rest.match(/^\s+background(-color)?: #/gm) ?? []).length).toBe(4);
-
-  // --- managebac ---
-  // Faria's Bootstrap 5.3 fork. Variables reach 33.1% of painted background;
-  // 403 utility classes paint hardcoded hex with !important for the rest, so
-  // this block overrides literals and the exception is bounded by count.
-  expect((managebac.match(/^\s+background(-color)?: #/gm) ?? []).length).toBe(6);
-  // Where ManageBac hardcodes background and colour in one rule, both move or
-  // the label goes dark-on-dark. The tiles shipped unreadable exactly once.
-  expect(managebac).toMatch(
-    /\.f-tile,\n  \.f-tile--link \{\n\s+background-color: #111111 !important;\n\s+border-color: #222222 !important;\n\s+color: #eeeeee !important;/,
-  );
-  // The page, and the utility class that covers 67% of the viewport on top of it.
-  expect(managebac).toContain("--f-body-bg: #000000 !important;");
-  expect(managebac).toMatch(/\.bg-gray-100 \{\n\s+background-color: #000000 !important;/);
-  // Component vars are declared inside .card{} / .modal{}, so the override has
-  // to sit on the class. On :root it applies cleanly and moves nothing.
-  expect(managebac).toContain("--f-card-bg: #111111 !important;");
-  expect(managebac).toContain("--f-modal-bg: #111111 !important;");
-  expect(managebac).toMatch(/\n  \.card,\n/);
-  // The school's brand class carries the primary family, so the selector has to
-  // match the theme-* family rather than one school's colour.
-  expect(managebac).toContain('body[class*="theme-"]');
-  expect(managebac).toContain("--f-primary-color: #ff00aa !important;");
-  // --f-secondary-color is the pale wash behind secondary buttons, not an
-  // accent. The accent here turns every one of them into a solid block.
-  expect(managebac).not.toContain("--f-secondary-color: #ff00aa");
-  // 39.4% of painted text, and it is ManageBac's own class, not Bootstrap's
-  // .text-secondary. ansi.white[0] for the nord reason.
-  expect(managebac).toMatch(/\.color-secondary,[\s\S]{0,120}color: #c5d3e0 !important;/);
-  // Curriculum and status colours are content, like Notion's block colours.
-  // Declarations, not prose — the block's own comment names them.
-  expect(managebac).not.toContain("--f-myp:");
-  expect(managebac).not.toContain("--f-danger:");
+  expect((css.match(/^\s+background(-color)?: #/gm) ?? []).length).toBe(4);
 
   // The canaries were a debugging aid, not a feature. They proved the blocks
   // applied while the pixels stayed stock; leaving them ships dead weight.
