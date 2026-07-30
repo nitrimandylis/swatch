@@ -328,10 +328,18 @@ export function zenProfile(): string | null {
 const CIDER = join(homedir(), "Library", "Application Support", "sh.cider.genten");
 
 /**
- * Cider 4's settings file. Four lines, all unique keys, so no block scoping is
- * needed. Cider's UI is artwork-driven by design — the accent is the only thing
- * a palette should say about it, and the two flags above it are what make Cider
- * read the accent at all instead of the system one.
+ * Cider 4's settings file. Every key here is unique in the document, so no block
+ * scoping is needed. Cider's UI is artwork-driven by design — `adaptiveColorPercent`
+ * and the immersive views follow the album cover whatever the palette says — so
+ * this sets the handful of places Cider will take a colour from us instead:
+ * the accent, the UI tint and the progress bar.
+ * ponytail: no background image. `backgroundBlurMap.src` can point at the
+ * theme's wallpaper, but Cider re-serialises the path unquoted, so a quoted
+ * write reports drift forever — matching another program's YAML quoting rules
+ * is a bug waiting for their next release. Cider's own solid background, which
+ * `appearance` and the tint already colour, looks better anyway.
+ * The flags matter as much as the values: Cider ignores a custom accent unless
+ * `useSystemAccentColor` is off and `customAccentColor` is on.
  * ponytail: no custom CSS. Restyling an Electron SPA means selectors that rot
  * silently on every Cider release, and `status` can only see changed lines.
  */
@@ -339,11 +347,23 @@ export function ciderConfig(text: string, t: Theme): string {
   let out = replaceLine(text, /^  appearance: .*$/, `  appearance: ${t.meta.variant}`);
   out = replaceLine(out, /^    useSystemAccentColor: .*$/, `    useSystemAccentColor: false`);
   out = replaceLine(out, /^    customAccentColor: .*$/, `    customAccentColor: true`);
-  return replaceLine(
+  out = replaceLine(
     out,
     /^    customAccentColorValue: .*$/,
     `    customAccentColorValue: "${t.roles.accent}"`,
   );
+  // The tint washes the whole UI at customTintColorRatio, which stays whatever
+  // the user set it to. `deep` rather than `accent`: a full-saturation wash over
+  // every surface is a lot, and `deep` is the same hue with the volume down.
+  out = replaceLine(out, /^    customTintColor: .*$/, `    customTintColor: true`);
+  out = replaceLine(
+    out,
+    /^    customTintColorValue: .*$/,
+    `    customTintColorValue: "${t.roles.deep}"`,
+  );
+  // AMProgressBar. Off by default, which is why the accent shows up almost
+  // nowhere until you turn it on.
+  return replaceLine(out, /^    useAccentColor: .*$/, `    useAccentColor: true`);
 }
 
 const ciderRunning = () => Bun.spawnSync(["pgrep", "-x", "Cider"]).exitCode === 0;

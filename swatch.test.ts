@@ -216,26 +216,53 @@ Locked=1
   expect(zenDefaultProfile("[Profile0]\nDefault=1\n")).toBeNull();
 });
 
-test("ciderConfig sets the accent and the two flags that make Cider read it", () => {
-  const t = parseTheme("test", "/tmp", GOOD);
-  // The nesting Cider ships: `appearance` under visual, the rest under ui_custom.
-  const cfg = `visual:
+// The nesting Cider ships, trimmed to the keys swatch writes. `enabled:` is
+// deliberately present twice: it appears 15 times in the real file.
+const CIDER_CFG = `visual:
   appearance: light
+  backgroundBlurMap:
+    enabled: false
+    src: ""
+    filter:
+      blur: 128
   customCSS: ""
   ui_custom:
     useSystemAccentColor: true
     customAccentColor: false
     customAccentColorValue: "#af52de"
+    customTintColor: false
     customTintColorValue: "#fa2d48"
+    customTintColorRatio: 0.5
+components:
+  AMProgressBar:
+    iOSStyle: true
+    useAccentColor: false
+connectivity:
+  parties:
+    enabled: true
 `;
-  const out = ciderConfig(cfg, t);
+
+test("ciderConfig sets every key Cider needs to take a colour from us", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  const out = ciderConfig(CIDER_CFG, t);
   expect(out).toContain("  appearance: dark\n");
   expect(out).toContain("    useSystemAccentColor: false\n");
   expect(out).toContain("    customAccentColor: true\n");
   expect(out).toContain('    customAccentColorValue: "#ff00aa"\n');
-  expect(out).toContain('    customTintColorValue: "#fa2d48"\n'); // not ours, left alone
-  // A Cider that renamed the key must fail loudly, not write a half-theme.
-  expect(() => ciderConfig(cfg.replace("customAccentColorValue", "accentValue"), t)).toThrow(/found 0/);
+  expect(out).toContain("    customTintColor: true\n");
+  expect(out).toContain('    customTintColorValue: "#8f2a3a"\n'); // deep, not accent
+  expect(out).toContain("    useAccentColor: true\n");
+  expect(out).toContain("    customTintColorRatio: 0.5\n"); // the user's, left alone
+  // Cider's own background stays Cider's: swatch colours it, never replaces it.
+  expect(out).toContain("    enabled: false\n    src: \"\"\n");
+});
+
+test("ciderConfig fails loudly if Cider renames a key", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  // Half a theme written into a live config is the silent drift swatch exists
+  // to prevent, so a missing key must throw before anything is put on disk.
+  expect(() => ciderConfig(CIDER_CFG.replace("customAccentColorValue", "accentValue"), t))
+    .toThrow(/found 0/);
 });
 
 test("readBmp reads a hand-built 2x2 24-bit BMP", () => {

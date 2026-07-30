@@ -213,7 +213,12 @@ flowchart LR
   while Cider is open is reverted with no error. Swatch checks `pgrep -x Cider`
   and tells you to quit and reopen. Cider also needs `useSystemAccentColor:
   false` and `customAccentColor: true` set, or the accent it is given is
-  ignored, which is why the surface writes four keys and not one.
+  ignored, which is why the surface writes flags as well as colours.
+- **Cider's background stays Cider's.** `backgroundBlurMap.src` can be pointed
+  at the theme's wallpaper, and it works, but Cider re-serialises the path
+  without quotes while swatch writes it with them, so `status` then reports
+  drift on a file that is correct. Matching another program's YAML quoting rules
+  is a bug waiting for its next release, and the solid background looks better.
 - **A "desktop" in System Events is a display, not a Space.** One monitor with
   five Spaces reports `count of desktops` = 1, so `set picture of every desktop`
   changes exactly one wallpaper. Spaces each keep their own, in
