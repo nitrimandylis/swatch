@@ -10,3 +10,4 @@ SHOWCASE.md
 # Themes are personal data and live in their own repo. Anchored, so the test
 # fixtures under test/themes/ still get tracked.
 /themes/
+/docs/
