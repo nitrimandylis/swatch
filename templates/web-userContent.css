@@ -182,6 +182,15 @@
   ytd-masthead {
     background-color: ${r.base} !important;
   }
+
+  /* The search field, same literal case: #121212, and the two variables holding
+     that colour were set to surface with the field unchanged. Its class is
+     component-generated and will not survive a rename — when it does, the field
+     degrades to YouTube's own grey rather than to anything broken, which is the
+     right way for a guess like this to fail. */
+  .ytSearchboxComponentInputBox {
+    background-color: ${r.surface} !important;
+  }
 }
 
 @-moz-document domain("wikipedia.org"), domain("wiktionary.org"),
@@ -304,10 +313,12 @@
      wrapper covers them. Walking ancestors up from a pixel in the empty right
      gutter is what found it — the area ranker had blamed html, which owns the
      largest box but not the visible pixel. Every ancestor between the wrapper
-     and the result list is transparent, so this one rule reaches all of it. */
+     and the result list is transparent, so this one rule reaches all of it.
+     .header-wrap is the same, found the same way, one pane higher. */
   html,
   body,
-  .site-wrapper {
+  .site-wrapper,
+  .header-wrap {
     background: ${r.base} !important;
   }
 }
