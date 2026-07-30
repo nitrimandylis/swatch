@@ -201,19 +201,27 @@ test("the notion stylesheet fills the semantic core without mistaking AccPri for
   // Notion's --c-*AccPri is a neutral emphasis step, not a brand accent: in
   // light mode --c-texAccPri ships as #5f5e59, a grey. Putting roles.accent
   // here turns every sidebar label the accent colour.
-  expect(css).toContain("--c-texAccPri: #eeeeee;");
+  expect(css).toContain("--c-texAccPri: #eeeeee !important;");
   expect(css).not.toMatch(/--c-(tex|ico)AccPri: #ff00aa/);
 
   // The accent belongs to the UI-blue family, which is what Notion seeds its
   // primary controls from.
-  expect(css).toContain("--c-palUiBlu600: #ff00aa;");
+  expect(css).toContain("--c-palUiBlu600: #ff00aa !important;");
 
   // --c-texSec carries column headers and sidebar section labels, not comments.
   // roles.muted there measured 1.69:1 against nord's base — unreadable. It stays
   // on the dim tiers only.
-  expect(css).toContain("--c-texSec: #c5d3e0;"); // ansi.white[0]
-  expect(css).not.toContain("--c-texSec: #888888;"); // roles.muted
-  expect(css).toContain("--c-texTer: #888888;");
+  expect(css).toContain("--c-texSec: #c5d3e0 !important;"); // ansi.white[0]
+  expect(css).not.toContain("--c-texSec: #888888"); // roles.muted
+  expect(css).toContain("--c-texTer: #888888 !important;");
+
+  // userContent.css is a user-origin sheet, which loses to author styles for
+  // normal declarations. Every declaration needs !important or Notion's own
+  // rules win — and it fails as a partial success (accent lands, backgrounds
+  // do not), which reads like a mapping bug rather than a cascade one.
+  const decls = css.match(/--c-[A-Za-z0-9]+:[^;]+;/g) ?? [];
+  expect(decls.length).toBeGreaterThan(20);
+  expect(decls.filter((d) => !d.includes("!important"))).toEqual([]);
 
   // <body> paints a literal no variable reaches. Without this rule a quarter of
   // the painted area stays Notion grey while every variable reads correct.
