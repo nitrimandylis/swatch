@@ -110,7 +110,7 @@ git config --global include.path '~/.config/git/swatch.gitconfig'
 ```bash
 git clone https://github.com/nitrimandylis/swatch.git
 cd swatch
-bun run compile   # → ~/.bun/bin/swatch, and man swatch into your manpath
+bun run compile   # → ~/.bun/bin/swatch, man swatch, and the agent skill
 swatch
 man swatch        # full reference, offline
 ```
@@ -177,6 +177,14 @@ built this way show why:
 
 No amount of sampling recovers the second one, which is the whole argument for
 leaving that field blank.
+
+## 🤖 The agent skill
+
+`swatch-cli/SKILL.md` is an agent skill for driving `swatch` — which three surfaces are opt-in and silently write nothing until wired up, why a palette containing `TODO` is a refusal rather than a bug, and that Cider has to be quit before applying. The traps that don't fit in
+`--help`, in other words. `bun run compile` copies it into `~/.claude/skills/`.
+
+It's a plain directory at the repo root rather than a `.claude/` one, because this repo is public and
+not everyone drives it with the same agent. Point yours at the file.
 
 ## 🔩 Under the hood
 
