@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool, lightness, rampAt, legcordCss, midnightVars } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool, lightness, rampAt, legcordCss, midnightVars, hsl, glanceTheme } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -511,6 +511,26 @@ test("rampAt returns a control point untouched and blends between them", () => {
   // white land on base and text instead of running off the ramp.
   expect(rampAt(pts, 0)).toBe("#000000");
   expect(rampAt(pts, 100)).toBe("#ffffff");
+});
+
+test("glance gets unitless HSL and a heatmap ramp off the accent", () => {
+  expect(hsl("#000000")).toBe("0 0 0");
+  expect(hsl("#ffffff")).toBe("0 0 100");
+  // Grey has no hue to compute, and the saturation formula divides by zero on it.
+  expect(hsl("#808080")).toBe("0 0 50");
+  expect(hsl("#ff00aa")).toBe("320 100 50");
+
+  const t = parseTheme("test", "/tmp", GOOD);
+  const yml = glanceTheme(t);
+  expect(yml).toContain("background-color: 0 0 0");
+  expect(yml).toContain("primary-color: 320 100 50");
+  // glance reads the stylesheet through its assets route, not from disk.
+  expect(yml).toContain("custom-css-file: /assets/user.css");
+
+  const css = render(readFileSync(join(HERE, "templates", "glance-user.css"), "utf8"), t);
+  expect(css).toContain("--hm-0: #111111;"); // empty day, surface
+  expect(css).toContain("--hm-4: #ff00aa;"); // busiest day, accent at full strength
+  expect(css).toContain("--hm-2: color-mix(in srgb, #ff00aa 55%, #000000);");
 });
 
 test("legcord puts the palette on Discord's own elevation scale", () => {

@@ -65,6 +65,11 @@ with the most saturated pixel and call it done.
 - **legcord needs no restart, unlike Cider.** Legcord watches `quickCss.css` and re-injects it about
   300 ms after a write. If Discord looks unthemed anyway, check `quickCss: true` in Legcord's
   `storage/settings.json` — with it off the file is never read, and swatch skips the surface.
+- **glance needs no restart either, but its stylesheet needs a tab refresh.** swatch writes
+  `~/.config/glance/theme.yml` (pulled in by `glance.yml` with `$include`) and `assets/user.css`.
+  glance watches every included file and reloads itself; the CSS is an asset the open tab has already
+  cached. The `assets/user.css` path assumes `assets-path` points at `./assets`, which is the documented
+  default.
 - **Quit Cider before applying.** Cider re-serialises the whole of `spa-config.yml` from memory on every
   save, so an edit made while it is running is reverted with no error. swatch checks `pgrep -x Cider`
   and tells you.

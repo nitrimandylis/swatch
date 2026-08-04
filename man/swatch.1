@@ -125,6 +125,14 @@ midnight theme documents, marked
 .B !important
 because a Vencord theme is injected after Quick CSS.
 .PP
+The glance dashboard is themed through its own include mechanism: swatch writes
+\fI~/.config/glance/theme.yml\fR whole, which \fIglance.yml\fR pulls in with
+.BR $include ,
+plus \fIassets/user.css\fR for the five contribution-heatmap levels. glance
+watches every file it includes and reloads in place, so nothing restarts;
+refresh the tab to pick up the stylesheet. The surface is skipped when
+\fI~/.config/glance/glance.yml\fR is absent.
+.PP
 On macOS 26 and later swatch also tints every app icon with the palette accent,
 by writing the icon appearance keys in NSGlobalDomain and then asking SkyLight to
 apply them, which is what makes the Dock re-render. No icon file is touched, and

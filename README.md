@@ -9,11 +9,11 @@
 
 <div align="center">
 
-### `ONE PALETTE // EIGHTEEN SURFACES // ONE COMMAND`
+### `ONE PALETTE // TWENTY SURFACES // ONE COMMAND`
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
-![surfaces](https://img.shields.io/badge/surfaces-18-e85a9c?style=flat-square&labelColor=111111)
+![surfaces](https://img.shields.io/badge/surfaces-20-e85a9c?style=flat-square&labelColor=111111)
 ![runtime](https://img.shields.io/badge/runtime-bun-4e749e?style=flat-square&labelColor=111111)
 ![deps](https://img.shields.io/badge/runtime_deps-0-4e749e?style=flat-square&labelColor=111111)
 ![license](https://img.shields.io/badge/license-MIT-e85a9c?style=flat-square&labelColor=111111)
@@ -25,8 +25,8 @@
 
 ## 🎨 What is this
 
-Theming a desktop by hand means the same hex code lives in eighteen files, and
-changing your mind means finding all eighteen. Swatch replaces that with one
+Theming a desktop by hand means the same hex code lives in twenty files, and
+changing your mind means finding all twenty. Swatch replaces that with one
 `palette.toml` per theme and a compiled CLI that writes every surface from it:
 terminal, editors, status bar, file manager, browser, wallpaper.
 
@@ -59,13 +59,14 @@ Batman Jazz
   ✓ web (reload any open tab)
   ✓ cider
   ✓ legcord
+  ✓ glance (reload the tab for the heatmap)
   ✓ icons
   ✓ highlight (apps read it at launch)
 ```
 
 ## 🔧 The surfaces
 
-Seven mechanisms cover everything. Which one a surface gets depends on what the
+Eight mechanisms cover everything. Which one a surface gets depends on what the
 app supports, not on preference.
 
 | | mechanism | what it actually does |
@@ -74,10 +75,11 @@ app supports, not on preference.
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
 | 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections, and the web — Notion, Notion Calendar, GitHub, YouTube, Wikipedia, DuckDuckGo and the Vercel dashboard have no config at all, so swatch themes each one through the CSS variables it already builds its UI from and lets Zen load them. All three are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh`, a gitconfig includes `swatch.gitconfig`, or Zen's `userContent.css` imports `swatch-web.css` |
 | 04 | **client-mod stylesheet** | the app stores its theme behind an account, so the only readable surface is the client mod's own stylesheet: Discord, through Legcord's `quickCss.css`. Opt-in by markers, because that file is one you write in too. Discord builds all 867 of its theme tokens from nine colour ramps on `:root`, so swatch overrides the ramps and not one semantic name, and adds the variables [refact0r's midnight](https://github.com/refact0r/midnight-discord) documents for anyone running it |
-| 05 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
-| 06 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
-| 07 | **preferences key** | no config file exists, the setting lives in NSGlobalDomain: the app icon tint (macOS 26 and up) and the system highlight colour, written with `defaults` |
-| 08 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
+| 05 | **generated file, app's own include** | the app already has a way to pull a file into its config, so swatch writes that file whole and never touches the config itself: glance's `theme:` block, referenced with `$include: theme.yml`, plus the stylesheet colouring its contribution heatmap. glance watches every included file and reloads in place, so nothing restarts |
+| 06 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
+| 07 | **osascript per Space** | the wallpaper. System Events' "desktop" means *display*, so swatch walks the Spaces with yabai and sets each one |
+| 08 | **preferences key** | no config file exists, the setting lives in NSGlobalDomain: the app icon tint (macOS 26 and up) and the system highlight colour, written with `defaults` |
+| 09 | **free** | p10k and fastfetch contain zero hex codes and inherit the terminal's remapped ANSI 16 |
 
 | | command | what it actually does |
 |---|---|---|
@@ -201,7 +203,7 @@ flowchart LR
     R --> T[templates/]
     T --> F[theme files]
     R --> M[marker blocks]
-    F --> A[19 surfaces]
+    F --> A[20 surfaces]
     M --> A
     R --> D[theme README.md]
 ```
