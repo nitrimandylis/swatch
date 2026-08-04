@@ -1,11 +1,11 @@
 ---
 name: swatch-cli
-description: Drive the swatch CLI — the macOS desktop theming tool that writes 19 app surfaces from one palette.toml. Use whenever the user wants to change or check their desktop theme, mentions swatch, a palette, a wallpaper, or theming Ghostty/btop/sketchybar/Zen/Cider/Legcord/yazi/zed/vscode, asks why a surface looks wrong after a theme change, or wants to build a new theme from an image.
+description: Drive the swatch CLI — the macOS desktop theming tool that writes 20 app surfaces from one palette.toml. Use whenever the user wants to change or check their desktop theme, mentions swatch, a palette, a wallpaper, or theming Ghostty/btop/sketchybar/Zen/Cider/Legcord/yazi/zed/vscode, asks why a surface looks wrong after a theme change, or wants to build a new theme from an image.
 ---
 
 # swatch
 
-`swatch` applies one `palette.toml` across 19 macOS surfaces. Compiled Bun binary at `~/.bun/bin/swatch`.
+`swatch` applies one `palette.toml` across 20 macOS surfaces. Compiled Bun binary at `~/.bun/bin/swatch`.
 Full offline reference: `man swatch`.
 
 Themes live in `$SWATCH_THEMES`, default `~/.config/swatch/themes`. Each theme is a directory holding
