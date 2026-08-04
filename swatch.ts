@@ -13,6 +13,7 @@ import yaziTpl from "./templates/yazi.toml" with { type: "text" };
 import lazygitTpl from "./templates/lazygit.yml" with { type: "text" };
 import zenCssTpl from "./templates/zen-userChrome.css" with { type: "text" };
 import webCssTpl from "./templates/web-userContent.css" with { type: "text" };
+import legcordStopsTpl from "./templates/legcord-stops.json" with { type: "text" };
 
 // Themes are yours, not the tool's: they hold wallpapers and taste, and they
 // outlive any one checkout of this repo. So they live in a normal config
@@ -309,6 +310,162 @@ export function mix(a: string, b: string, ratio: number): string {
   return `#${ch(0)}${ch(1)}${ch(2)}`;
 }
 
+/** HSL lightness of a hex, 0-100 — the axis Discord's colour ramps are built on. */
+export function lightness(hex: string): number {
+  const ch = [0, 1, 2].map((i) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255);
+  return ((Math.max(...ch) + Math.min(...ch)) / 2) * 100;
+}
+
+/**
+ * Place a colour at lightness `l` on a ramp of `[lightness, hex]` control points.
+ *
+ * A stop landing exactly on a control point gets that hex untouched — which is
+ * what puts `roles.base` in the chat area rather than an approximation of it —
+ * and anything between two points is blended. Outside the range it clamps, so
+ * Discord's pure white and pure black end up as text and base.
+ */
+export function rampAt(points: [number, string][], l: number): string {
+  const pts = [...points].sort((a, b) => a[0] - b[0]);
+  if (l <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++) {
+    const [lo, hi] = [pts[i - 1], pts[i]];
+    if (l > hi[0]) continue;
+    // Two control points at the same lightness would divide by zero.
+    return hi[0] === lo[0] ? hi[1] : mix(lo[1], hi[1], (l - lo[0]) / (hi[0] - lo[0]));
+  }
+  return pts[pts.length - 1][1];
+}
+
+/**
+ * Discord's every theme token — 867 declarations per theme class, split between
+ * a legacy block and an `@supports (color-mix)` one that overrides part of it —
+ * is built from nine colour ramps defined once on `:root`. Overriding those
+ * primitives reaches both blocks at once, covers all four of Discord's themes,
+ * and keeps working when Discord adds a token, which is why not a single
+ * semantic name appears below except the ten that have to.
+ *
+ * The exception: text on an accent-filled control resolves to `--neutral-1`,
+ * i.e. near-`text`, and no primitive can separate it from every other light
+ * label. On a pale accent that is unreadable, so those ten take `on_fill`.
+ *
+ * Left alone deliberately: the `--opacity-*` ramps, which are white and black
+ * alphas painting every hover wash and border. Forcing them opaque fixes nothing
+ * and turns each hover into a solid block.
+ */
+export function legcordCss(t: Theme): string {
+  const r = t.roles, a = t.ansi;
+  // Discord's own lightness for the stop that paints each thing, so a role lands
+  // where that role belongs instead of wherever its own lightness happens to
+  // fall. The window frame is 15.49 and clamps onto base with the chat area:
+  // Discord separates them by three points of lightness, a palette has one
+  // deepest colour, and the two biggest areas agreeing is the terminal's rule.
+  const greys: [number, string][] = [
+    [18.431, r.base],    // neutral-73  --background-base-lowest, the chat area
+    [22.745, r.surface], // neutral-66  --background-base-low, the channel sidebar
+    [26.471, r.overlay], // neutral-60  --background-surface-highest, popouts and modals
+    [68.431, r.muted],   // neutral-23  --text-muted
+    [95.49, r.text],     // neutral-4   --text-default, message body
+  ];
+  // A hue family's two ends are its ANSI pair, placed at their own lightness:
+  // a red is a red wherever it sits, so nothing has to be pinned to a stop.
+  const hue = (pair: [string, string]): [number, string][] =>
+    [[0, r.base], [lightness(pair[0]), pair[0]], [lightness(pair[1]), pair[1]], [100, r.text]];
+  const ramps: Record<string, [number, string][]> = {
+    neutral: greys,
+    primary: greys, // the background ramp under Dark and Light
+    plum: greys,    // the same tokens under Darker and Midnight
+    // blurple-50 is the brand: buttons, mentions, the selected switch. It is
+    // pinned rather than lightness-matched, or a pale accent would slide off
+    // the fill and land somewhere nothing reads it.
+    blurple: [[0, r.base], [43.333, r.deep], [64.706, r.accent], [100, r.text]],
+    "red-new": hue(a.red),
+    "green-new": hue(a.green),
+    "yellow-new": hue(a.yellow),
+    "blue-new": hue(a.blue),
+    "teal-new": hue(a.cyan),
+  };
+  // Foregrounds whose surface is filled with the brand colour: the label and
+  // icon of a primary button, a brand badge, and the mark inside a selected
+  // checkbox, radio or switch.
+  // Not every one is reachable: the Add Friend pill takes `color: var(--white)`
+  // from a rule keyed on a hashed class, and --white is legitimately white
+  // everywhere else. Pinning that class would break on Discord's next build for
+  // one label, so it stays white.
+  const ON_FILL = [
+    "--control-primary-text-default", "--control-primary-text-hover", "--control-primary-text-active",
+    "--control-primary-icon-default", "--control-primary-icon-hover", "--control-primary-icon-active",
+    "--badge-text-brand", "--checkbox-icon-active",
+    "--radio-thumb-background-active", "--switch-thumb-background-selected-default",
+  ];
+
+  const stops = Object.entries(JSON.parse(legcordStopsTpl) as Record<string, number>);
+  return [
+    `/* ${t.meta.name} — generated by swatch, do not edit */`,
+    ":root {",
+    ...stops.map(([stop, l]) => {
+      const ramp = ramps[stop.slice(0, stop.lastIndexOf("-"))];
+      if (!ramp) throw new Error(`legcord-stops.json has an unknown family: ${stop}`);
+      return `  --${stop}: ${rampAt(ramp, l)};`;
+    }),
+    "",
+    "  /* text sitting on an accent fill, which no primitive can reach */",
+    ...ON_FILL.map((n) => `  ${n}: ${r.on_fill};`),
+    "",
+    ...midnightVars(t).map(([n, v]) => `  ${n}: ${v} !important;`),
+    "}",
+  ].join("\n");
+}
+
+/**
+ * refact0r's midnight, the common Discord theme, remaps 205 of Discord's token
+ * names onto a small palette of its own, so the primitives above reach every
+ * pane it leaves alone and none of the ones it takes over. These are the
+ * variables it documents for exactly this.
+ *
+ * `!important` because a Vencord theme is injected after Quick CSS: midnight's
+ * own defaults are later in source order and win any tie without it. On a client
+ * with no midnight installed the names are simply never read.
+ */
+export function midnightVars(t: Theme): [string, string][] {
+  const r = t.roles, a = t.ansi;
+  const wash = (hex: string, alpha: number) => `rgba(${rgbTriplet(hex)},${alpha})`;
+  // 1 is the lightest stop of each hue, 5 the darkest. These drive the status
+  // dots: --online is --green-2, --dnd --red-2, --idle --yellow-2, --streaming
+  // --purple-2, so the ANSI pair reaches presence without naming it.
+  const hue = (name: string, pair: [string, string]): [string, string][] => [
+    [`--${name}-1`, pair[1]],
+    [`--${name}-2`, mix(pair[1], pair[0], 0.5)],
+    [`--${name}-3`, pair[0]],
+    [`--${name}-4`, mix(pair[0], r.base, 0.18)],
+    [`--${name}-5`, mix(pair[0], r.base, 0.35)],
+  ];
+  return [
+    ["--bg-4", r.base],                        // the main background
+    ["--bg-3", r.surface],                     // spacing and secondary elements
+    ["--bg-2", r.overlay],                     // dark buttons
+    ["--bg-1", mix(r.overlay, r.text, 0.12)],  // dark buttons, pressed
+    ["--text-0", r.on_fill],                   // text on a coloured element
+    ["--text-1", a.white[1]],
+    ["--text-2", r.text],                      // headings
+    ["--text-3", mix(r.text, r.muted, 0.5)],   // message body
+    ["--text-4", r.muted],                     // icon buttons and channel names
+    ["--text-5", mix(r.muted, r.base, 0.45)],  // muted channels and timestamps
+    ["--accent-1", mix(r.accent, r.text, 0.3)], // links
+    ["--accent-2", mix(r.accent, r.text, 0.15)],
+    ["--accent-3", r.accent],                  // accent buttons
+    ["--accent-4", mix(r.accent, r.deep, 0.5)],
+    ["--accent-5", r.deep],
+    // Translucent washes. Midnight's are hue 220 and read blue over a red or
+    // green palette, so they take the palette's own mid-tone at its alphas.
+    ["--hover", wash(mix(r.overlay, r.text, 0.3), 0.1)],
+    ["--active", wash(mix(r.overlay, r.text, 0.3), 0.2)],
+    ["--active-2", wash(mix(r.overlay, r.text, 0.3), 0.3)],
+    ["--message-hover", wash(r.base, 0.1)],
+    ...hue("red", a.red), ...hue("green", a.green), ...hue("blue", a.blue),
+    ...hue("yellow", a.yellow), ...hue("purple", a.magenta),
+  ];
+}
+
 /** cava's 8-stop gradient, cool floor rising to a hot accent tip. */
 export function cavaGradient(t: Theme): string {
   const r = t.roles, a = t.ansi;
@@ -428,6 +585,7 @@ export function zenProfile(): string | null {
 }
 
 const CIDER = join(homedir(), "Library", "Application Support", "sh.cider.genten");
+const LEGCORD = join(homedir(), "Library", "Application Support", "legcord");
 
 /**
  * Cider 4's settings file. Every key here is unique in the document, so no block
@@ -963,6 +1121,34 @@ export const SURFACES: Surface[] = [
       return ciderRunning()
         ? "cider (QUIT AND REOPEN CIDER — it overwrites this file while running)"
         : "cider";
+    },
+  },
+  {
+    name: "legcord",
+    /**
+     * Discord, through Legcord's Quick CSS. Discord itself stores nothing
+     * readable — its theme lives behind an account — so the client mod's own
+     * stylesheet is the only surface `status` can see.
+     *
+     * Opt-in by markers, because `quickCss.css` is a file you write in too:
+     * Legcord creates it empty on first run and has an editor for it, so its
+     * existence proves nothing. Paste the two markers once and swatch fills
+     * between them, leaving your own CSS on either side alone.
+     *
+     * No restart needed, unlike Cider: Legcord `fs.watch`es this path and
+     * re-injects on save, and writing in place keeps the inode the watcher holds.
+     */
+    apply(t) {
+      const css = join(LEGCORD, "quickCss.css");
+      const settings = join(LEGCORD, "storage", "settings.json");
+      if (!existsSync(css) || !existsSync(settings)) return null;
+      // Quick CSS off means Legcord never reads the file. Writing it anyway
+      // would have `status` report a themed surface that paints nothing.
+      if (JSON.parse(readFileSync(settings, "utf8")).quickCss !== true) return null;
+      const cur = readFileSync(css, "utf8");
+      if (!cur.includes("/* swatch:start */")) return null;
+      put(css, inject(cur, legcordCss(t), "/*", "*/"));
+      return "legcord";
     },
   },
   {
