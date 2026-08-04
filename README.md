@@ -93,7 +93,7 @@ Swatch refuses to apply any palette containing the string `TODO`.
 Needs [Bun](https://bun.sh) and macOS. Every themed app is optional, swatch
 skips what isn't installed.
 
-Three surfaces are opt-in, because none of these apps has a config file whose
+Four surfaces are opt-in, because none of these apps has a config file whose
 existence would prove you want it themed. Set them up once and swatch keeps them
 current:
 
@@ -107,6 +107,12 @@ git config --global include.path '~/.config/git/swatch.gitconfig'
 # Wikipedia, DuckDuckGo, the Vercel dashboard. In your Zen profile's
 # chrome/userContent.css:
 #   @import "swatch-web.css";
+
+# Discord, themed inside Legcord. In
+# ~/Library/Application Support/legcord/quickCss.css, which Legcord watches and
+# re-injects on save, so this one needs no restart:
+#   /* swatch:start */
+#   /* swatch:end */
 ```
 
 ```bash
@@ -182,7 +188,7 @@ leaving that field blank.
 
 ## 🤖 The agent skill
 
-`swatch-cli/SKILL.md` is an agent skill for driving `swatch` — which three surfaces are opt-in and silently write nothing until wired up, why a palette containing `TODO` is a refusal rather than a bug, and that Cider has to be quit before applying. The traps that don't fit in `--help`, in other words. `bun run compile` copies it into `~/.claude/skills/` if you already have that directory, and leaves your machine alone if you don't.
+`swatch-cli/SKILL.md` is an agent skill for driving `swatch` — which four surfaces are opt-in and silently write nothing until wired up, why a palette containing `TODO` is a refusal rather than a bug, and that Cider has to be quit before applying. The traps that don't fit in `--help`, in other words. `bun run compile` copies it into `~/.claude/skills/` if you already have that directory, and leaves your machine alone if you don't.
 
 It's a plain directory at the repo root rather than a `.claude/` one, because this repo is public and not everyone drives it with the same agent. Point yours at the file.
 
@@ -202,7 +208,7 @@ flowchart LR
 
 | layer | path | job |
 |---|---|---|
-| cli | `swatch.ts` | palette validation, the surface table, all three mechanisms |
+| cli | `swatch.ts` | palette validation, the surface table, every mechanism |
 | documents | `templates/` | the long color files, embedded into the binary at compile time via `with { type: "text" }`, so nothing is read from disk at runtime |
 | tests | `swatch.test.ts` | the pure logic: hex conversion, BMP parsing, chroma ranking, marker injection |
 | fixtures | `test/themes/` | one fake theme, so the tests never need your real ones |

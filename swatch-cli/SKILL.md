@@ -1,11 +1,11 @@
 ---
 name: swatch-cli
-description: Drive the swatch CLI — the macOS desktop theming tool that writes 18 app surfaces from one palette.toml. Use whenever the user wants to change or check their desktop theme, mentions swatch, a palette, a wallpaper, or theming Ghostty/btop/sketchybar/Zen/Cider/yazi/zed/vscode, asks why a surface looks wrong after a theme change, or wants to build a new theme from an image.
+description: Drive the swatch CLI — the macOS desktop theming tool that writes 19 app surfaces from one palette.toml. Use whenever the user wants to change or check their desktop theme, mentions swatch, a palette, a wallpaper, or theming Ghostty/btop/sketchybar/Zen/Cider/Legcord/yazi/zed/vscode, asks why a surface looks wrong after a theme change, or wants to build a new theme from an image.
 ---
 
 # swatch
 
-`swatch` applies one `palette.toml` across 18 macOS surfaces. Compiled Bun binary at `~/.bun/bin/swatch`.
+`swatch` applies one `palette.toml` across 19 macOS surfaces. Compiled Bun binary at `~/.bun/bin/swatch`.
 Full offline reference: `man swatch`.
 
 Themes live in `$SWATCH_THEMES`, default `~/.config/swatch/themes`. Each theme is a directory holding
@@ -57,10 +57,14 @@ with the most saturated pixel and call it done.
 
 ## Things that will bite you
 
-- **Three surfaces are opt-in and write nothing until wired up once:** fzf needs a shell rc sourcing
-  `~/.config/fzf/colors.sh`, git needs `include.path = ~/.config/git/swatch.gitconfig`, and the web
-  surface needs Zen's `chrome/userContent.css` to `@import "swatch-web.css"`. A surface that "doesn't
-  work" is usually one of these three, not a swatch bug.
+- **Four surfaces are opt-in and write nothing until wired up once:** fzf needs a shell rc sourcing
+  `~/.config/fzf/colors.sh`, git needs `include.path = ~/.config/git/swatch.gitconfig`, the web
+  surface needs Zen's `chrome/userContent.css` to `@import "swatch-web.css"`, and legcord needs
+  `/* swatch:start */` and `/* swatch:end */` in Legcord's `quickCss.css`. A surface that "doesn't
+  work" is usually one of these four, not a swatch bug.
+- **legcord needs no restart, unlike Cider.** Legcord watches `quickCss.css` and re-injects it about
+  300 ms after a write. If Discord looks unthemed anyway, check `quickCss: true` in Legcord's
+  `storage/settings.json` — with it off the file is never read, and swatch skips the surface.
 - **Quit Cider before applying.** Cider re-serialises the whole of `spa-config.yml` from memory on every
   save, so an edit made while it is running is reverted with no error. swatch checks `pgrep -x Cider`
   and tells you.

@@ -93,23 +93,37 @@ API: its "desktop" is a display. Swatch therefore walks the Spaces with
 setting each and restoring focus afterwards. Without yabai it sets the focused
 Space only and says so.
 .PP
-Three surfaces are opt-in, because none of these apps keeps a config file whose
+Four surfaces are opt-in, because none of these apps keeps a config file whose
 presence would mean "theme me". Swatch writes
 \fI~/.config/fzf/colors.sh\fR only when
 \fI~/.config/fzf\fR exists,
-\fI~/.config/git/swatch.gitconfig\fR only when a gitconfig already includes it, and
+\fI~/.config/git/swatch.gitconfig\fR only when a gitconfig already includes it,
 \fIswatch\-web.css\fR in Zen's chrome directory only when
-\fIuserContent.css\fR imports it:
+\fIuserContent.css\fR imports it, and Legcord's
+\fIquickCss.css\fR only when that file already carries the swatch markers:
 .IP
 .EX
 mkdir \-p ~/.config/fzf
 # in your shell rc: source ~/.config/fzf/colors.sh
 git config \-\-global include.path '~/.config/git/swatch.gitconfig'
 # in Zen's chrome/userContent.css: @import "swatch\-web.css";
+# in ~/Library/Application Support/legcord/quickCss.css:
+#   /* swatch:start */
+#   /* swatch:end */
 .EE
 .PP
 The fzf colours reach a shell the next time it starts, not the one that ran
 .BR swatch (1).
+.PP
+Discord keeps its theme behind an account, so the only readable surface is the
+client mod's stylesheet. Swatch writes Legcord's
+\fIquickCss.css\fR, which Legcord watches and re-injects on save, so the palette
+lands without a restart. Discord builds every theme token from nine colour ramps
+on \fI:root\fR, and swatch overrides the ramps rather than any token, which
+covers all four of its themes at once. It also writes the variables refact0r's
+midnight theme documents, marked
+.B !important
+because a Vencord theme is injected after Quick CSS.
 .PP
 On macOS 26 and later swatch also tints every app icon with the palette accent,
 by writing the icon appearance keys in NSGlobalDomain and then asking SkyLight to
