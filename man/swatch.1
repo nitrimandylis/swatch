@@ -46,8 +46,13 @@ the theme, and otherwise takes the first.
 .B status [\fItheme\fR]
 Run
 .B use
-with the writes turned off and report which files would change. Defaults to the
-first theme.
+with the writes turned off and report which files would change. With no theme
+named, it reports on the theme currently applied, read back from ghostty's
+.I theme
+line;
+.B swatch
+keeps no state file of its own. If that cannot be determined it falls back to
+the first theme, which is a listing, not a reading of your desktop.
 .TP
 .B new \fIname\fR \fIimage\fR...
 Scaffold a theme directory: copies the images into
@@ -70,6 +75,67 @@ fzf \-m | swatch add nord \-
 .TP
 .BR \-h ", " \-\-help
 Show help.
+.TP
+.B \-\-json
+Machine-readable output for
+.B list
+and
+.BR status .
+Accepted in any position. See
+.B JSON OUTPUT
+below.
+.SH JSON OUTPUT
+With
+.BR \-\-json ,
+stdout carries exactly one JSON value and nothing else; errors stay on stderr
+with a non-zero exit status.
+.TP
+.B swatch list \-\-json
+An array, one object per theme:
+.IR slug ", " name ", " variant ", " description ", "
+.I wallpapers
+(a count),
+.I active
+(true for the theme currently applied), and
+.IR unfinished .
+A theme scaffolded by
+.B new
+but not finished is listed with
+.I unfinished
+true and
+.IR name ", " variant " and " description " " null,
+rather than being dropped.
+.TP
+.B swatch list \fItheme\fB \-\-json
+One object:
+.I theme
+and
+.IR wallpapers ,
+an array of
+.IR "{pick, file}" .
+The
+.I pick
+value is what
+.B \-\-pick
+takes.
+.TP
+.B swatch status [\fItheme\fB] \-\-json
+One object:
+.IR theme ", " name ", "
+.I active
+(the applied theme, or null), and
+.IR surfaces ,
+an array of
+.I "{name, state, files}"
+where
+.I state
+is
+.BR in-sync ", " stale " or " absent ,
+and
+.I files
+lists the paths a
+.B use
+would rewrite.
 .SH ENVIRONMENT
 .TP
 .B SWATCH_THEMES
@@ -134,8 +200,9 @@ refresh the tab to pick up the stylesheet. The surface is skipped when
 \fI~/.config/glance/glance.yml\fR is absent.
 .PP
 On macOS 26 and later swatch also tints every app icon with the palette accent,
-by writing the icon appearance keys in NSGlobalDomain and then asking SkyLight to
-apply them, which is what makes the Dock re-render. No icon file is touched, and
+by writing the icon appearance keys in NSGlobalDomain and then asking SkyLight
+to apply them, which is what makes the Dock re-render. No icon file is touched,
+and
 .B "System Settings > Appearance"
 puts it back. Earlier releases have no such setting and the surface is skipped.
 .PP

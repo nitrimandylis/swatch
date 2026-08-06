@@ -85,7 +85,8 @@ app supports, not on preference.
 |---|---|---|
 | 01 | `swatch list` | themes on disk, unfinished scaffolds marked as such |
 | 02 | `swatch use <theme>` | applies everything, skips apps that aren't installed, regenerates the theme's README |
-| 03 | `swatch status` | the same code path with writes disabled, tells you which files have drifted |
+| 03 | `swatch status` | the same code path with writes disabled, tells you which files have drifted. defaults to the theme actually applied |
+| 03a | `--json` | on `list` and `status`, for scripts. `active` is how you ask which theme is up, since swatch stores no state |
 | 04 | `swatch new <name> <img>...` | samples the first wallpaper into a palette scaffold and marks the accent TODO |
 
 Swatch refuses to apply any palette containing the string `TODO`.

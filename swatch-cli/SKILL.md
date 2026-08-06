@@ -19,7 +19,15 @@ swatch list                  # every theme, with wallpaper counts; unfinished sc
 swatch list <theme>          # that theme's wallpapers, numbered
 swatch status                # what a re-apply would change, writes disabled
 swatch status <theme>        # same, against a theme that isn't currently applied
+
+swatch list --json           # [{slug, name, variant, description, wallpapers, active, unfinished}]
+swatch list <theme> --json   # {theme, wallpapers: [{pick, file}]} — pick is what --pick takes
+swatch status --json         # {theme, name, active, surfaces: [{name, state, files}]}
 ```
+
+**`--json` is how you find the active theme.** swatch keeps no state file, so
+`active` in the JSON is read back from ghostty's `theme` line. Never infer the
+active theme from the order `swatch list` prints.
 
 `swatch status` is the same code path as `use` with writes turned off. Run it before and after any
 change: it is how you tell drift from a real difference.
@@ -56,6 +64,11 @@ them is a judgement about what the picture is *of*. Hand the choice back to the 
 with the most saturated pixel and call it done.
 
 ## Things that will bite you
+
+- **`state` in status JSON is three-valued, and `absent` is not a failure.**
+  `absent` means the surface's app is not set up on this machine, so swatch
+  skips it; `stale` means a `use` would rewrite the listed files; `in-sync`
+  means it would not. Only `stale` is a difference worth reporting to the user.
 
 - **Four surfaces are opt-in and write nothing until wired up once:** fzf needs a shell rc sourcing
   `~/.config/fzf/colors.sh`, git needs `include.path = ~/.config/git/swatch.gitconfig`, the web

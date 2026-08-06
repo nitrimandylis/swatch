@@ -94,6 +94,23 @@ export function listThemes(): string[] {
 }
 
 /**
+ * The theme currently applied, or null if it cannot be told.
+ *
+ * swatch keeps no state file on purpose, so the applied theme has to be read
+ * back off a surface it wrote. ghostty's config is the one used because its
+ * `theme =` line holds the slug verbatim and every other surface is written in
+ * the same pass. A slug naming a theme that no longer exists reads as null
+ * rather than as that theme, so a deleted theme cannot be reported as active.
+ */
+export function activeTheme(): string | null {
+  const cfg = join(homedir(), ".config", "ghostty", "config");
+  if (!existsSync(cfg)) return null;
+  const line = readFileSync(cfg, "utf8").match(/^theme = (.+)$/m);
+  const slug = line?.[1]?.trim();
+  return slug && listThemes().includes(slug) ? slug : null;
+}
+
+/**
  * A theme's wallpapers, sorted. One theme, many pictures: the palette is the
  * theme, the picture is a mood inside it.
  *
@@ -1441,6 +1458,9 @@ usage:
   swatch use <theme>           apply a theme to every surface
   swatch use <theme> --pick N  ...with wallpaper N, skipping the menu
   swatch status [theme]        what a re-apply would change, without changing it
+                               (no theme: the one currently applied)
+  swatch list --json           themes, wallpaper counts and which is active
+  swatch status --json         the same check, as one JSON object
   swatch new <name> <image>... scaffold a theme; the palette comes from the first
   swatch add <theme> <image>.. copy more wallpapers in ("-" reads paths from stdin)
   swatch -h, --help            this
@@ -1505,7 +1525,10 @@ function flag(args: string[], name: string): string | undefined {
 }
 
 function main() {
-  const [cmd, ...args] = process.argv.slice(2);
+  // --json is stripped before dispatch so it works in any position and never
+  // lands in an image list or gets read as a --pick value.
+  const json = process.argv.includes("--json");
+  const [cmd, ...args] = process.argv.slice(2).filter((a) => a !== "--json");
 
   if (!cmd || cmd === "-h" || cmd === "--help") return console.log(HELP);
 
@@ -1525,8 +1548,45 @@ function main() {
         throw new Error(`no theme "${only}" — try: swatch list`);
       const files = pool(dir);
       if (!files.length) throw new Error(`no wallpapers in "${only}" — add one: swatch add ${only} <image>`);
+      if (json) {
+        // `pick` is what --pick takes, so it is carried rather than left for
+        // the consumer to recompute off an array index.
+        return console.log(JSON.stringify({
+          theme: only,
+          wallpapers: files.map((file, i) => ({ pick: i + 1, file })),
+        }));
+      }
       files.forEach((f, i) => console.log(`${String(i + 1).padStart(3)}. ${f}`));
       return;
+    }
+    if (json) {
+      const active = activeTheme();
+      return console.log(JSON.stringify(listThemes().map((slug) => {
+        try {
+          const t = loadTheme(slug);
+          return {
+            slug,
+            name: t.meta.name,
+            variant: t.meta.variant,
+            description: t.meta.description,
+            wallpapers: pool(t.dir).length,
+            active: slug === active,
+            unfinished: false,
+          };
+        } catch {
+          // A scaffolded theme still belongs in the list; `use` is what refuses
+          // to load it. Dropping it here would hide it from anything reading JSON.
+          return {
+            slug,
+            name: null,
+            variant: null,
+            description: null,
+            wallpapers: pool(join(themesDir(), slug)).length,
+            active: slug === active,
+            unfinished: true,
+          };
+        }
+      })));
     }
     for (const slug of listThemes()) {
       // A theme scaffolded by `swatch new` is unfinished by design, so list has to
@@ -1571,17 +1631,38 @@ function main() {
   }
 
   if (cmd === "status") {
-    const slug = args[0] ?? listThemes()[0];
+    // Default to the theme actually applied, not the alphabetically first one.
+    // Bare `swatch status` used to report on whatever sorted first, which reads
+    // exactly like a status of the live desktop and is not one.
+    const slug = args[0] ?? activeTheme() ?? listThemes()[0];
     if (!slug) throw new Error("no themes yet — try: swatch new <name> <image>");
     const t = loadTheme(slug);
     CHECK = true;
-    console.log(`${t.meta.name}: what "swatch use ${slug}" would change`);
-    for (const s of SURFACES) {
+
+    const surfaces = SURFACES.map((s) => {
       PENDING = [];
       const present = s.apply(t);
-      if (!present) console.log(`  · ${s.name} not set up here`);
-      else if (!PENDING.length) console.log(`  ✓ ${s.name} in sync`);
-      else for (const p of PENDING) console.log(`  ✗ ${s.name} would rewrite ${p.replace(homedir(), "~")}`);
+      return {
+        name: s.name,
+        state: !present ? "absent" : PENDING.length ? "stale" : "in-sync",
+        files: PENDING.map((p) => p.replace(homedir(), "~")),
+      };
+    });
+
+    if (json) {
+      return console.log(JSON.stringify({
+        theme: slug,
+        name: t.meta.name,
+        active: activeTheme(),
+        surfaces,
+      }));
+    }
+
+    console.log(`${t.meta.name}: what "swatch use ${slug}" would change`);
+    for (const s of surfaces) {
+      if (s.state === "absent") console.log(`  · ${s.name} not set up here`);
+      else if (s.state === "in-sync") console.log(`  ✓ ${s.name} in sync`);
+      else for (const p of s.files) console.log(`  ✗ ${s.name} would rewrite ${p}`);
     }
     return;
   }
