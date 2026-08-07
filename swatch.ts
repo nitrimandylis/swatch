@@ -1525,12 +1525,23 @@ function flag(args: string[], name: string): string | undefined {
 }
 
 function main() {
+  const argv = process.argv.slice(2);
+
+  // --help wins wherever it appears. It used to be recognised only in the first
+  // position, so `swatch list --help` fell through to the theme-name argument
+  // and failed with `no theme "--help"`.
+  if (!argv.length || argv.includes("-h") || argv.includes("--help")) return console.log(HELP);
+
+  // Same reason: an unrecognised flag used to be read as a theme or an image
+  // path. "-" is left alone, it means stdin to `swatch add`.
+  const KNOWN_FLAGS = ["--json", "--pick"];
+  const unknown = argv.find((a) => a.startsWith("-") && a !== "-" && !KNOWN_FLAGS.includes(a));
+  if (unknown) throw new Error(`unknown option "${unknown}"\n\n${HELP}`);
+
   // --json is stripped before dispatch so it works in any position and never
   // lands in an image list or gets read as a --pick value.
-  const json = process.argv.includes("--json");
-  const [cmd, ...args] = process.argv.slice(2).filter((a) => a !== "--json");
-
-  if (!cmd || cmd === "-h" || cmd === "--help") return console.log(HELP);
+  const json = argv.includes("--json");
+  const [cmd, ...args] = argv.filter((a) => a !== "--json");
 
   // Every reader below sees a missing themes directory as "nothing to do", which
   // reads as success on a fresh install. Say it out loud instead. `new` is

@@ -737,3 +737,24 @@ test("addToPool writes nothing when any name in the batch collides", () => {
   expect(addToPool(dir, [png])).toEqual(["a.png"]);
   expect(() => addToPool(dir, [png])).toThrow(/already in this theme/);
 });
+
+// `swatch list --help` used to fail with `no theme "--help"`: --help was only
+// recognised in the first position, so it fell through to the theme argument.
+// Every command here is read-only if this regresses; nothing applies a theme.
+test("--help wins anywhere, and unknown options are rejected", () => {
+  const { spawnSync } = require("node:child_process");
+  const run = (args: string[]) =>
+    spawnSync("bun", [`${import.meta.dir}/swatch.ts`, ...args], { encoding: "utf8" });
+
+  for (const args of [["--help"], ["-h"], ["list", "--help"], ["status", "-h"]]) {
+    const r = run(args);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("swatch — switch the whole desktop to a theme");
+  }
+
+  const bad = run(["list", "--bogus"]);
+  expect(bad.status).toBe(1);
+  expect(bad.stderr).toContain('unknown option "--bogus"');
+  // it must not be mistaken for a theme name any more
+  expect(bad.stderr).not.toContain('no theme "--bogus"');
+});
