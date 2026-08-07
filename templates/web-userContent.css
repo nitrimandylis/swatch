@@ -356,6 +356,106 @@
   }
 }
 
+@-moz-document domain("inithabits.com") {
+  /* The entire palette is a 20-colour inline style attribute on <html>, written
+     by the app at boot. There is no stylesheet rule to outrank and no
+     data-theme hook to match on, so every other block's multi-selector form has
+     nothing to attach to here. Inline style is author origin *normal*, and
+     user-origin !important outranks it — :root alone is the whole selector, and
+     nothing below <html> redeclares the set. Measured: with the block applied,
+     body's background follows --bg.
+
+     34 properties, 20 of them colours. The rest are --sp-* spacing, --fs,
+     --mono and --radius, and are left alone.
+
+     --muted is 58.8% of painted text, the highest share of any secondary tier
+     in this file: it carries the ░ progress bars, the calendar and the habit
+     list. It also *derives* 55 more elements through color-mix at 20% and 30%
+     alpha, so setting it moves those too — verified by overriding it and
+     re-reading their computed colour, not assumed from the name. roles.muted
+     would take all of that to nord's 1.69:1, so it gets ansi.white[0] like the
+     other secondary tiers here.
+
+     Not set, deliberately: the rgba(139,148,158,0.4) tier — 23 elements, 1.6%
+     of painted text, a hardcoded #8b949e with no variable behind it. Well below
+     the share that earns an element selector, and it degrades to a grey that
+     still reads. */
+  :root {
+    /* 97.9% of painted background, and the two panels that step off it */
+    --bg: ${r.base} !important;
+    --panel: ${r.surface} !important;
+    --panel-2: ${r.overlay} !important;
+    --border: ${r.overlay} !important;
+    --border-dim: ${r.surface} !important;
+
+    --text: ${r.text} !important;
+    --muted: ${a.white[0]} !important;
+
+    --accent: ${r.accent} !important;
+    --accent-dim: ${r.deep} !important;
+    --on-accent: ${r.on_fill} !important;
+
+    /* This app names its colours after the terminal, not after a brand, so the
+       ansi ramp is the honest target for the ones that are not the accent.
+
+       --headers is misnamed and measuring it is the only way to see that: it
+       does not title the `$ section` boxes — those are .box-label reading
+       --accent — it paints the hostname inside the `nick@init.Habits` prompt
+       and the secondary `+ routine` chip, and nothing else on the daily route.
+       Two elements, but they are the only second hue in the layout, so it takes
+       ansi.blue rather than collapsing into the accent.
+
+       --cyan and --bar-shield-color hold one teal between them, 5 elements.
+
+       The bright ansi stop, not the normal one, and that is measured across all
+       11 themes rather than chosen for looks: against roles.base, blue[0] falls
+       under 4.5:1 on 7 of them and bottoms out at 2.76:1 on mclaren, while
+       blue[1] holds 5.27:1 at worst. cyan[0] does the same thing (3.36:1
+       worst). yellow keeps its normal stop because that one already clears
+       5.53:1 everywhere — the rule here is the measurement, not a uniform
+       preference for bright. red is the one that clears nothing: [1] is
+       4.39:1 at worst, still short of AA, and still far better than [0]'s
+       2.80:1.
+
+       --warn, --error and --accent-dim paint nothing on the daily route, so
+       unlike everything else in this block they are mapped from their names
+       rather than from a measurement. Whichever routes raise them are where to
+       check that. */
+    --headers: ${a.blue[1]} !important;
+    --cyan: ${a.cyan[1]} !important;
+    --bar-shield-color: ${a.cyan[1]} !important;
+    --warn: ${a.yellow[0]} !important;
+    --error: ${a.red[1]} !important;
+
+    /* --vac is that same teal at 0x66. color-mix keeps the 40% rather than
+       flattening it: it is a wash over the calendar, and an opaque value would
+       hide the day underneath. */
+    --vac: color-mix(in srgb, ${a.cyan[0]} 40%, transparent) !important;
+
+    /* The contributions ramp. c0 is the empty cell and takes overlay, the
+       colour it already shared with --panel-2. That lands at 1.21:1 against
+       base on the weakest theme, which looks like a failure and is not: stock's
+       own #e6e6e6 on #ffffff is 1.19:1. The empty cell is meant to be barely
+       there, and overlay reproduces that relationship almost exactly.
+
+       c1-c4 are mixed rather than pulled from ansi.green: the ramp has to read
+       as one gradient into --accent whatever hue the accent is, and a green
+       ramp under a magenta accent does not. Stock's steps are roughly even, so
+       these are too. */
+    --c0: ${r.overlay} !important;
+    --c1: color-mix(in srgb, ${r.accent} 20%, ${r.overlay}) !important;
+    --c2: color-mix(in srgb, ${r.accent} 40%, ${r.overlay}) !important;
+    --c3: color-mix(in srgb, ${r.accent} 60%, ${r.overlay}) !important;
+    --c4: color-mix(in srgb, ${r.accent} 80%, ${r.overlay}) !important;
+    --c5: ${r.accent} !important;
+
+    /* The inline style hardcodes color-scheme: light, which leaves scrollbars
+       and form controls white under a dark palette. The only site in this file
+       that needs this line — the others follow the profile's own dark mode. */
+    color-scheme: ${m.variant} !important;
+  }
+}
+
 @-moz-document domain("calendar.notion.so") {
   /* Notion Calendar is Cron renamed: 734 custom properties and not one --c-*.
      Nothing from the Notion block above applies here.

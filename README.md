@@ -73,7 +73,7 @@ app supports, not on preference.
 |---|---|---|
 | 01 | **pointer flip** | swatch writes a theme file next to the config and swaps one line to name it: ghostty, btop, glow, zed, vscode, yazi |
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
-| 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections, and the web — Notion, Notion Calendar, GitHub, YouTube, Wikipedia, DuckDuckGo and the Vercel dashboard have no config at all, so swatch themes each one through the CSS variables it already builds its UI from and lets Zen load them. All three are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh`, a gitconfig includes `swatch.gitconfig`, or Zen's `userContent.css` imports `swatch-web.css` |
+| 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections, and the web — Notion, Notion Calendar, GitHub, YouTube, Wikipedia, DuckDuckGo, init.Habits and the Vercel dashboard have no config at all, so swatch themes each one through the CSS variables it already builds its UI from and lets Zen load them. All three are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh`, a gitconfig includes `swatch.gitconfig`, or Zen's `userContent.css` imports `swatch-web.css` |
 | 04 | **client-mod stylesheet** | the app stores its theme behind an account, so the only readable surface is the client mod's own stylesheet: Discord, through Legcord's `quickCss.css`. Opt-in by markers, because that file is one you write in too. Discord builds all 867 of its theme tokens from nine colour ramps on `:root`, so swatch overrides the ramps and not one semantic name, and adds the variables [refact0r's midnight](https://github.com/refact0r/midnight-discord) documents for anyone running it |
 | 05 | **generated file, app's own include** | the app already has a way to pull a file into its config, so swatch writes that file whole and never touches the config itself: glance's `theme:` block, referenced with `$include: theme.yml`, plus the stylesheet colouring its contribution heatmap. glance watches every included file and reloads in place, so nothing restarts |
 | 06 | **key edit** | the app owns its config outright and rewrites it wholesale, so swatch sets only the keys that make it read a palette colour, plus a one-line CSS variable override: cider |
@@ -107,7 +107,7 @@ mkdir -p ~/.config/fzf   # then, in your shell rc:
 git config --global include.path '~/.config/git/swatch.gitconfig'
 
 # The web, themed inside Zen: Notion, Notion Calendar, GitHub, YouTube,
-# Wikipedia, DuckDuckGo, the Vercel dashboard. In your Zen profile's
+# Wikipedia, DuckDuckGo, init.Habits, the Vercel dashboard. In your Zen profile's
 # chrome/userContent.css:
 #   @import "swatch-web.css";
 
