@@ -8,7 +8,7 @@ A theme is a directory: `palette.toml` plus a `wallpapers/` pool. `swatch use
 there is more than one picture to choose between.
 
 The problem it solves is duplication. Before this, the hex `#e85a9c` appeared in
-eighteen config files, and changing it meant finding all eighteen. Now it
+twenty config files, and changing it meant finding all twenty. Now it
 appears once.
 
 ## Where it came from
@@ -43,7 +43,7 @@ same time, which is what made the old name wrong rather than merely imprecise.
 
 ## State
 
-Working. Twenty surfaces, 51 tests, compiled to `~/.bun/bin/swatch`. Switching
+Working. Twenty surfaces, 52 tests, compiled to `~/.bun/bin/swatch`. Switching
 themes has been exercised end to end: Batman Jazz → Firewatch moved every
 pointer and every injected block, and `status` confirmed every installed
 surface back in sync. Notion was verified separately by sampling pixels in Zen:

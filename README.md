@@ -289,8 +289,26 @@ flowchart LR
   Likewise `--c-texSec` carries column headers and sidebar labels rather than
   comments, so it takes `ansi.white[0]`; `roles.muted` is the comment colour by
   palette convention and measures 1.69:1 against nord's base, which is
-  invisible. **Nord is the palette to check a new mapping against** — it is
-  low-contrast by design, so it fails first.
+  invisible. **Nord is the palette to check a new *role* mapping against** — it
+  is low-contrast by design, so it fails first. It is the wrong yardstick for
+  the ansi ramp, though: nord's `blue[0]` clears 4.64:1 while mclaren's is
+  2.76:1 and firewatch's `roles.accent` is the tightest of all at 4.89:1. Check
+  a colour against every theme, not against the one that usually loses.
+- **The normal ansi stop is often too dark to read on `roles.base`.** Measured
+  across all eleven themes, `blue[0]` falls under 4.5:1 on seven of them and
+  `cyan[0]` on several, while the bright stop holds 5.27:1 and 6.59:1 at worst.
+  Yellow is the counter-example, since `yellow[0]` already clears 5.53:1
+  everywhere, so measure each one rather than reaching for bright by habit.
+  `red` clears nothing either way: `red[1]` is 4.39:1 at its worst and still
+  short.
+- **A site can keep its whole palette in an inline `style` on `<html>`.**
+  init.Habits writes all twenty-two of its colours there at boot, so there is no
+  stylesheet rule to outrank and no `data-theme` class to match, and
+  `tools/rank-vars.js` reports the names happily while a `:root` block that
+  forgets `!important` does nothing. It needs *less* selector than the others,
+  not more: inline style is author origin *normal*, so user-origin `!important`
+  beats it and `:root` alone is the whole block. The other blocks carry extra
+  selectors because a descendant redeclares the set. Nothing here does.
 - **The icon tint is three keys and a notification.** macOS 26 stores it in
   NSGlobalDomain as `AppleIconAppearanceTheme` (`TintedDark`/`TintedLight`),
   `AppleIconAppearanceTintColor` (`Other`, the slot meaning "not one of the nine

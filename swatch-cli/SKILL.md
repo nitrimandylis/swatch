@@ -106,6 +106,26 @@ lands and the backgrounds do not, which reads like a palette bug and is not one.
 it from a devtools `<style>` injection, because that is author origin and applies cleanly regardless.
 Screenshot the real browser and sample the pixels.
 
+That rule is about *origin*, and injection is still the right tool for the other half. Settle origin
+by running Zen itself: build a throwaway profile with `chrome/swatch-web.css`, a `userContent.css`
+that imports it, and a `user.js` setting `toolkit.legacyUserProfileCustomizations.stylesheets`, then
+`/Applications/Zen.app/Contents/MacOS/zen --headless --profile "$T" --screenshot out.png
+--window-size 1440,900 <url>`. There is no `timeout` on this machine, and wrapping the command in
+one kills it before Zen runs, which looks exactly like the flags being wrong.
+Whether the *mapping* looks right across a logged-in app is a separate question, and injection
+answers that one fine. Keep the two claims apart. A login-gated site needs both, because the fresh
+profile only ever reaches the logged-out shell.
+
+**A site may keep its entire palette in an inline `style` attribute on `<html>`.** init.Habits does.
+There is no rule to outrank and no theme class to hang a selector on, so the usual multi-selector
+form has nothing to attach to. It needs less than the others, not more: inline style is author origin
+*normal*, so a user-origin `!important` on `:root` alone wins. The missing selectors are not a bug.
+
+**Check a colour against every theme, not just nord.** Nord fails first on the *roles* and is the
+right yardstick there, but not for the ansi ramp: `blue[0]` is fine on nord and 2.76:1 on mclaren.
+The normal ansi stop is under 4.5:1 on `roles.base` more often than not, so measure before choosing
+between `[0]` and `[1]`.
+
 When an override applies and nothing moves, use the repo's `tools/what-paints.js` to walk ancestors up
 from a coordinate. Do not reach for `tools/rank-vars.js` — area-ranking is for discovering variable
 names on a site nobody has themed yet, and pointed at an "applied, nothing moved" symptom it blames the

@@ -357,7 +357,7 @@
 }
 
 @-moz-document domain("inithabits.com") {
-  /* The entire palette is a 20-colour inline style attribute on <html>, written
+  /* The entire palette is a 22-colour inline style attribute on <html>, written
      by the app at boot. There is no stylesheet rule to outrank and no
      data-theme hook to match on, so every other block's multi-selector form has
      nothing to attach to here. Inline style is author origin *normal*, and
@@ -365,8 +365,8 @@
      nothing below <html> redeclares the set. Measured: with the block applied,
      body's background follows --bg.
 
-     34 properties, 20 of them colours. The rest are --sp-* spacing, --fs,
-     --mono and --radius, and are left alone.
+     34 properties, 22 of them colours, and this block sets all 22. The rest are
+     --sp-* spacing, --fs, --mono and --radius, and are left alone.
 
      --muted is 58.8% of painted text, the highest share of any secondary tier
      in this file: it carries the ░ progress bars, the calendar and the habit
