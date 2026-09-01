@@ -782,6 +782,7 @@ test("t3code publishes two seeds plus the roles T3 Code derives badly", () => {
     "surface", "surfaceRaised", "surfaceOverlay", "border", "input",
     "secondary", "muted", "chrome", "toolbar", "toolbarControl",
     "sidebar", "sidebarBorder", "sidebarRowHover", "codeBackground",
+    "messageSurface", "messageAction",
   ];
   for (const k of NEUTRAL)
     expect([t.roles.base, t.roles.surface, t.roles.overlay]).toContain(f.colors[k]);

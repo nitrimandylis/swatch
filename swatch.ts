@@ -380,19 +380,25 @@ export function glanceTheme(t: Theme): string {
  * `colors` is layered on top. So anything not listed here still lands somewhere
  * coherent, and a role a newer build adds is filled in rather than missing.
  *
- * What is listed is **every neutral**, because the generator tints them. Its
+ * What is listed is **every surface**, because the generator tints them all. Its
  * tint input is the accent at 20% over the canvas, which for a hot accent on a
  * dark canvas is a muddy version of the accent hue — Spider-Verse's magenta over
- * indigo derived a maroon, and every surface, sidebar row, toolbar pill and
- * inline code chip came out that colour instead of the palette's indigo. Seeds
- * alone are only safe when the accent is close to the palette's own surfaces.
- * The accent family (accentSurface, focus, update, the message bubble) is still
- * derived, because there it is the point.
+ * indigo derived a maroon, and every surface, sidebar row, toolbar pill, inline
+ * code chip and message bubble came out that colour instead of the palette's
+ * indigo. Seeds alone are only safe when the accent already sits close to the
+ * palette's own surfaces. The surfaces that should read as accent-tinted get an
+ * explicit small mix toward the accent rather than the derived tint, which is
+ * both subtler and the palette's own hue. Only the roles that are meant to be
+ * the accent outright (focus, the update banner) are still left to derive.
  *
  * No fonts and no ANSI: T3 Code has no slots for either.
  */
 export function t3Theme(t: Theme): string {
   const r = t.roles;
+  // A selection or a "this one is yours" bubble wants a hint of the accent, not
+  // a slab of it: `deep` at full strength shouted, and the derived tint was the
+  // wrong hue entirely. This is the palette's own accent, barely applied.
+  const tinted = mix(r.overlay, r.accent, 0.18);
   return JSON.stringify(
     {
       name: t.meta.name,
@@ -436,7 +442,17 @@ export function t3Theme(t: Theme): string {
         sidebarControlSurface: r.overlay,
         sidebarRowHover: r.overlay,
         sidebarRowActive: r.overlay,
-        sidebarRowSelected: r.deep,
+        sidebarRowSelected: tinted,
+
+        // Your own messages and the buttons on them. Left derived, these were the
+        // last thing still wearing the maroon: a full-width crimson slab.
+        messageSurface: r.overlay,
+        messageForeground: r.text,
+        messageAction: r.overlay,
+        messageActionForeground: r.text,
+        messageActionHover: tinted,
+        accentSurface: tinted,
+        accentSurfaceForeground: r.text,
 
         // Inline code and fenced blocks, the densest thing on screen.
         codeBackground: r.surface,
