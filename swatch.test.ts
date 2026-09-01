@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool, lightness, rampAt, legcordCss, midnightVars, hsl, glanceTheme } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool, lightness, rampAt, legcordCss, midnightVars, hsl, glanceTheme, t3Theme } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -757,4 +757,26 @@ test("--help wins anywhere, and unknown options are rejected", () => {
   expect(bad.stderr).toContain('unknown option "--bogus"');
   // it must not be mistaken for a theme name any more
   expect(bad.stderr).not.toContain('no theme "--bogus"');
+});
+
+test("t3code publishes two seeds plus the roles T3 Code derives badly", () => {
+  const t = parseTheme("test", "/tmp", GOOD);
+  const f = JSON.parse(t3Theme(t));
+
+  // Seeds, not a full palette: the client grows the rest from these two.
+  expect(f.canvas).toBe(t.roles.base);
+  expect(f.accent).toBe(t.roles.accent);
+  expect(f.appearance).toBe("dark");
+  expect(f.name).toBe(t.meta.name);
+
+  // The status colours have to be the palette's own, not a hue rotation.
+  expect(f.colors.error).toBe(t.ansi.red[0]);
+  expect(f.colors.warning).toBe(t.ansi.yellow[0]);
+  expect(f.colors.terminalBackground).toBe(t.roles.base);
+  expect(f.colors.terminalCursor).toBe(t.roles.accent);
+
+  // Every value must satisfy the client's colour pattern, or the whole file is
+  // dropped with nothing but a line in the server log.
+  for (const v of [f.canvas, f.accent, ...Object.values(f.colors) as string[]])
+    expect(v).toMatch(/^#[0-9a-f]{6}$/);
 });

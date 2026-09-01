@@ -200,6 +200,15 @@ watches every file it includes and reloads in place, so nothing restarts;
 refresh the tab to pick up the stylesheet. The surface is skipped when
 \fI~/.config/glance/glance.yml\fR is absent.
 .PP
+T3 Code follows a palette its own machine publishes: swatch writes
+\fI~/.t3/userdata/themes/swatch.json\fR and then sets \fBdefaultTheme\fR and
+\fBdefaultThemeSetAt\fR in \fI~/.t3/userdata/settings.json\fR. The file carries
+two seed colours plus the nine roles T3 Code would otherwise derive badly, and
+the app grows the rest of the palette from the seeds; there are no font or ANSI
+slots to write. Both files are watched, so nothing restarts, and the timestamp
+is what makes a recolour under the same name reach clients that already applied
+it. The surface is skipped when \fI~/.t3/userdata\fR is absent.
+.PP
 On macOS 26 and later swatch also tints every app icon with the palette accent,
 by writing the icon appearance keys in NSGlobalDomain and then asking SkyLight
 to apply them, which is what makes the Dock re-render. No icon file is touched,

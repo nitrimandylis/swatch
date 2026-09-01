@@ -1,6 +1,6 @@
 ---
 name: swatch-cli
-description: Drive the swatch CLI — the macOS desktop theming tool that writes 20 app surfaces from one palette.toml. Use whenever the user wants to change or check their desktop theme, mentions swatch, a palette, a wallpaper, or theming Ghostty/btop/sketchybar/Zen/Cider/Legcord/yazi/zed/vscode, asks why a surface looks wrong after a theme change, or wants to build a new theme from an image.
+description: Drive the swatch CLI — the macOS desktop theming tool that writes 21 app surfaces from one palette.toml. Use whenever the user wants to change or check their desktop theme, mentions swatch, a palette, a wallpaper, or theming Ghostty/btop/sketchybar/Zen/Cider/Legcord/yazi/zed/vscode/T3 Code, asks why a surface looks wrong after a theme change, or wants to build a new theme from an image.
 ---
 
 # swatch
@@ -78,6 +78,12 @@ with the most saturated pixel and call it done.
 - **legcord needs no restart, unlike Cider.** Legcord watches `quickCss.css` and re-injects it about
   300 ms after a write. If Discord looks unthemed anyway, check `quickCss: true` in Legcord's
   `storage/settings.json` — with it off the file is never read, and swatch skips the surface.
+- **T3 Code needs no restart and no `t3` CLI.** swatch writes `~/.t3/userdata/themes/swatch.json`
+  and sets `defaultTheme` / `defaultThemeSetAt` in `~/.t3/userdata/settings.json`; the server watches
+  both and pushes the change to every connected client. The file is two seed colours (`canvas`,
+  `accent`) plus nine explicit roles — T3 Code derives the rest itself, and has no font or ANSI slots.
+  The theme id is the filename, so it stays `swatch` across recolours; the timestamp is what makes
+  the same name re-apply. Skipped when `~/.t3/userdata` does not exist.
 - **glance needs no restart either, but its stylesheet needs a tab refresh.** swatch writes
   `~/.config/glance/theme.yml` (pulled in by `glance.yml` with `$include`) and `assets/user.css`.
   glance watches every included file and reloads itself; the CSS is an asset the open tab has already

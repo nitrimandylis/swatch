@@ -4,7 +4,7 @@
 
 A CLI that applies one palette across every themed surface on a macOS desktop.
 A theme is a directory: `palette.toml` plus a `wallpapers/` pool. `swatch use
-<theme>` writes twenty surfaces from it, and picks from the pool with fzf when
+<theme>` writes twenty-one surfaces from it, and picks from the pool with fzf when
 there is more than one picture to choose between.
 
 The problem it solves is duplication. Before this, the hex `#e85a9c` appeared in
@@ -63,6 +63,7 @@ ever reaches a session-check splash, and the second cannot speak to origin.
 | surface | mechanism |
 |---|---|
 | ghostty, btop, glow, zed, vscode, yazi | pointer flip |
+| t3code | pointer flip in JSON, plus a set-at stamp so a recolour re-applies |
 | fzf, git, web | generated file, static include, opt-in |
 | borders, cava, lazygit, zen | marker injection |
 | cider | key edit, no theme file |

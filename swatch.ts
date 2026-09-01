@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { readdirSync, existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readdirSync, existsSync, readFileSync, writeFileSync, mkdirSync, renameSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { homedir, release } from "node:os";
 
@@ -176,6 +176,21 @@ function put(path: string, content: string) {
   }
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, content);
+}
+
+/**
+ * `put` for a file something else is watching: write beside it and rename, so a
+ * reader woken by the write never sees a half-written document.
+ */
+function putAtomic(path: string, content: string) {
+  if (CHECK) {
+    if (!existsSync(path) || readFileSync(path, "utf8") !== content) PENDING.push(path);
+    return;
+  }
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.swatch-tmp`;
+  writeFileSync(tmp, content);
+  renameSync(tmp, path);
 }
 
 function run(cmd: string[]) {
@@ -359,6 +374,42 @@ export function glanceTheme(t: Theme): string {
 }
 
 /** HSL lightness of a hex, 0-100 — the axis Discord's colour ramps are built on. */
+/**
+ * T3 Code's environment theme file. Two seed colours plus the roles the client
+ * would otherwise derive badly: it grows the whole palette out of `canvas` x
+ * `accent` with the same generator its guided editor uses, so anything not
+ * listed here still lands in the right family. The nine explicit roles are the
+ * ones a derived value gets visibly wrong — terminal chrome and the two status
+ * colours, which must be the palette's own reds and yellows.
+ *
+ * No fonts and no ANSI: T3 Code has no slots for either.
+ * ponytail: upgrade path if the sidebars read off — add `sidebar`,
+ * `surfaceRaised`, `surfaceOverlay` from surface/overlay.
+ */
+export function t3Theme(t: Theme): string {
+  return JSON.stringify(
+    {
+      name: t.meta.name,
+      appearance: t.meta.variant,
+      canvas: t.roles.base,
+      accent: t.roles.accent,
+      colors: {
+        accentForeground: t.roles.on_fill,
+        text: t.roles.text,
+        textMuted: t.roles.muted,
+        terminalBackground: t.roles.base,
+        terminalForeground: t.roles.text,
+        terminalCursor: t.roles.accent,
+        terminalSelection: t.roles.overlay,
+        error: t.ansi.red[0],
+        warning: t.ansi.yellow[0],
+      },
+    },
+    null,
+    2,
+  ) + "\n";
+}
+
 export function lightness(hex: string): number {
   const ch = [0, 1, 2].map((i) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255);
   return ((Math.max(...ch) + Math.min(...ch)) / 2) * 100;
@@ -634,6 +685,7 @@ export function zenProfile(): string | null {
 
 const CIDER = join(homedir(), "Library", "Application Support", "sh.cider.genten");
 const LEGCORD = join(homedir(), "Library", "Application Support", "legcord");
+const T3 = join(homedir(), ".t3", "userdata");
 
 /**
  * Cider 4's settings file. Every key here is unique in the document, so no block
@@ -1074,6 +1126,50 @@ export const SURFACES: Surface[] = [
         ),
       );
       return "vscode (restart VS Code to pick it up)";
+    },
+  },
+  {
+    name: "t3code",
+    /**
+     * T3 Code, the Claude Code GUI. `~/.t3/userdata/themes/<id>.json` is a
+     * palette the machine publishes for the app to follow; the id is the
+     * filename, so it stays `swatch` across recolours and clients keep their
+     * selection. `defaultTheme` names it and `defaultThemeSetAt` is what makes
+     * a re-set of the same name act, so a recolour reaches clients that already
+     * applied it once.
+     *
+     * No restart and no `t3` CLI: the server watches both files and pushes the
+     * change. Opt-in by `~/.t3/userdata` existing, which only T3 Code creates.
+     */
+    apply(t) {
+      if (!existsSync(T3)) return null;
+      const themeFile = join(T3, "themes", "swatch.json");
+      const body = t3Theme(t);
+      // A watcher firing mid-write reads a truncated file, logs "ignoring
+      // invalid environment theme" and drops the theme until something writes
+      // again — which nothing would. Rename is atomic, so it never sees one.
+      const stale = !existsSync(themeFile) || readFileSync(themeFile, "utf8") !== body;
+      putAtomic(themeFile, body);
+
+      const settings = join(T3, "settings.json");
+      const raw = existsSync(settings) ? readFileSync(settings, "utf8") : "{}";
+      const cur = JSON.parse(raw.trim() || "{}");
+      // Only stamp a new time when something actually changed, or `status`
+      // would report drift on every run against a clock that always moves.
+      if (!stale && cur.defaultTheme === "swatch") return "t3code";
+      if (CHECK) {
+        PENDING.push(settings);
+        return "t3code";
+      }
+      // ponytail: read-then-write with no retry. The running server owns this
+      // file too, and a write landing in the gap is lost — take the CLI's
+      // re-read-and-retry loop if that is ever seen.
+      putAtomic(settings, JSON.stringify(
+        { ...cur, defaultTheme: "swatch", defaultThemeSetAt: new Date().toISOString() },
+        null,
+        2,
+      ) + "\n");
+      return "t3code";
     },
   },
   {
