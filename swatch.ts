@@ -373,32 +373,81 @@ export function glanceTheme(t: Theme): string {
   ].join("\n");
 }
 
-/** HSL lightness of a hex, 0-100 — the axis Discord's colour ramps are built on. */
+/** WCAG relative luminance. */
+export function relLuminance(hex: string): number {
+  const ch = [0, 1, 2]
+    .map((i) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255)
+    .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * ch[0]! + 0.7152 * ch[1]! + 0.0722 * ch[2]!;
+}
+
+/** WCAG contrast ratio: 1 for identical colours, 21 for black on white. */
+export function contrast(a: string, b: string): number {
+  const [hi, lo] = [relLuminance(a), relLuminance(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+}
+
+/** WCAG AA for body text. */
+const AA = 4.5;
+
 /**
- * T3 Code's environment theme file. `canvas` and `accent` are seeds: the client
- * grows a whole palette from them with its guided editor's generator, and
- * `colors` is layered on top. So anything not listed here still lands somewhere
- * coherent, and a role a newer build adds is filled in rather than missing.
+ * `want`, nudged toward `toward` in 5% steps until it clears AA against every
+ * background in `bgs`. A palette that already works is returned untouched, so
+ * this changes nothing for the themes that do not need it — it exists so no
+ * theme needs a hand-written exception to be readable.
+ */
+export function legible(bgs: string[], want: string, toward: string, min = AA): string {
+  for (let r = 0; r <= 1.0001; r += 0.05) {
+    const c = mix(want, toward, r);
+    if (bgs.every((b) => contrast(c, b) >= min)) return c;
+  }
+  return toward;
+}
+
+/**
+ * T3 Code's environment theme file. `canvas` and `accent` are seeds the client
+ * grows a whole palette from, and `colors` is layered on top — so a role a newer
+ * build adds still lands somewhere coherent rather than missing.
  *
- * What is listed is **every surface**, because the generator tints them all. Its
- * tint input is the accent at 20% over the canvas, which for a hot accent on a
- * dark canvas is a muddy version of the accent hue — Spider-Verse's magenta over
- * indigo derived a maroon, and every surface, sidebar row, toolbar pill, inline
- * code chip and message bubble came out that colour instead of the palette's
- * indigo. Seeds alone are only safe when the accent already sits close to the
- * palette's own surfaces. The surfaces that should read as accent-tinted get an
- * explicit small mix toward the accent rather than the derived tint, which is
- * both subtler and the palette's own hue. Only the roles that are meant to be
- * the accent outright (focus, the update banner) are still left to derive.
+ * Every role T3 Code currently knows is published, because the generator is the
+ * wrong tool for a palette we already hold. Its tint input is the accent at 20%
+ * over the canvas, which for a hot accent on a dark canvas is a muddy version of
+ * the accent hue: Spider-Verse's magenta over indigo derived a maroon, and every
+ * surface, sidebar row, toolbar pill, code chip and message bubble came out that
+ * colour instead of the palette's indigo. Seeds alone are only safe when the
+ * accent already sits close to the palette's own surfaces.
+ *
+ * Nothing here is per-theme. Two rules do the work that hand-tuning otherwise
+ * would, and both are no-ops on a palette that already holds up:
+ *
+ *   - `dim` keeps secondary text readable. Several published schemes use a
+ *     code-comment grey for `muted` (nord's is 1.4:1 on its own surface), which
+ *     is idiomatic behind syntax highlighting and unusable for timestamps and
+ *     placeholders. It is nudged along its own muted-to-text axis, no further
+ *     than AA needs.
+ *   - `tinted` is built from `surface`, not `overlay`. Accent-tinted surfaces
+ *     carry body text, and on a palette with a light overlay (mclaren's is a
+ *     mid-brown) an overlay-based tint misses AA; off `surface` every theme
+ *     clears it.
  *
  * No fonts and no ANSI: T3 Code has no slots for either.
  */
 export function t3Theme(t: Theme): string {
   const r = t.roles;
-  // A selection or a "this one is yours" bubble wants a hint of the accent, not
-  // a slab of it: `deep` at full strength shouted, and the derived tint was the
-  // wrong hue entirely. This is the palette's own accent, barely applied.
-  const tinted = mix(r.overlay, r.accent, 0.18);
+  const dim = legible([r.base, r.surface], r.muted, r.text);
+  const tinted = mix(r.surface, r.accent, 0.18);
+  // Popovers, menus, inputs, buttons and hovered rows all carry body text on the
+  // overlay tier. A palette whose overlay is light enough to fail AA against its
+  // own text — mclaren's is a mid-brown — is pulled back toward `surface`, only
+  // as far as AA needs. `overlay` itself still draws the lines and the scrollbar,
+  // where a lighter value is the better one and nothing has to be read off it.
+  const panel = legible([r.text], r.overlay, r.surface);
+  // A real elevation ladder out of three background roles: base < surface <
+  // raised < panel, so popovers read as above panels rather than beside them.
+  const raised = mix(r.surface, panel, 0.5);
+  const errSurface = mix(r.surface, t.ansi.red[0], 0.18);
+  const warnSurface = mix(r.surface, t.ansi.yellow[0], 0.18);
+
   return JSON.stringify(
     {
       name: t.meta.name,
@@ -406,67 +455,85 @@ export function t3Theme(t: Theme): string {
       canvas: r.base,
       accent: r.accent,
       colors: {
-        // Text.
-        text: r.text,
-        textMuted: r.muted,
-        mutedForeground: r.muted,
-        secondaryLabel: r.muted,
-        placeholder: r.muted,
-        iconMuted: r.muted,
-        accentForeground: r.on_fill,
-
-        // The three surface tiers, over the canvas.
-        surface: r.surface,
-        surfaceRaised: r.overlay,
-        surfaceOverlay: r.overlay,
-        border: r.overlay,
-        input: r.overlay,
-        secondary: r.surface,
-        secondaryForeground: r.text,
-        muted: r.surface,
-
-        // Chrome. The pills in the title bar are toolbar controls.
+        // Backgrounds.
+        canvas: r.base,
         chrome: r.base,
         toolbar: r.base,
-        toolbarForeground: r.text,
-        toolbarBorder: r.overlay,
+        surface: r.surface,
+        surfaceRaised: raised,
+        surfaceOverlay: panel,
+        secondary: r.surface,
+        muted: r.surface,
         toolbarControl: r.surface,
-        toolbarControlForeground: r.text,
-        toolbarControlHover: r.overlay,
+        toolbarControlHover: panel,
+        codeBackground: r.surface,
 
-        // Sidebar. Selection stays in the accent family; hover and active do not.
+        // Lines: borders, dividers, input outlines.
+        border: r.overlay,
+        toolbarBorder: r.overlay,
+        sidebarBorder: r.overlay,
+        input: panel,
+
+        // Primary text, on every background above.
+        text: r.text,
+        toolbarForeground: r.text,
+        toolbarControlForeground: r.text,
+        secondaryForeground: r.text,
+        codeForeground: r.text,
+
+        // Secondary text: timestamps, placeholders, project names, icons.
+        textMuted: dim,
+        mutedForeground: dim,
+        placeholder: dim,
+        secondaryLabel: dim,
+        iconMuted: dim,
+        sidebarMutedForeground: dim,
+
+        // Sidebar. Hover and active stay neutral so selection is the only row
+        // wearing the accent.
         sidebar: r.surface,
         sidebarForeground: r.text,
-        sidebarMutedForeground: r.muted,
-        sidebarBorder: r.overlay,
-        sidebarControlSurface: r.overlay,
-        sidebarRowHover: r.overlay,
-        sidebarRowActive: r.overlay,
+        sidebarControlSurface: panel,
+        sidebarRowHover: panel,
+        sidebarRowActive: panel,
         sidebarRowSelected: tinted,
 
-        // Your own messages and the buttons on them. Left derived, these were the
-        // last thing still wearing the maroon: a full-width crimson slab.
-        messageSurface: r.overlay,
+        // Your own messages and the buttons on them. T3 Code means the bubble to
+        // read as accent-family, so it gets the tint — the palette's own accent,
+        // barely applied, rather than the derived one.
+        messageSurface: tinted,
         messageForeground: r.text,
-        messageAction: r.overlay,
+        messageAction: panel,
         messageActionForeground: r.text,
         messageActionHover: tinted,
         accentSurface: tinted,
         accentSurfaceForeground: r.text,
 
-        // Inline code and fenced blocks, the densest thing on screen.
-        codeBackground: r.surface,
-        codeForeground: r.text,
+        // The accent itself, and what sits on top of a fill of it.
+        accent: r.accent,
+        accentForeground: r.on_fill,
+        focus: r.accent,
+        update: r.accent,
+        updateForeground: r.on_fill,
+        updateSurface: tinted,
 
         // Terminal.
         terminalBackground: r.base,
         terminalForeground: r.text,
         terminalCursor: r.accent,
-        terminalSelection: r.overlay,
+        terminalSelection: panel,
+        terminalScrollbar: r.overlay,
+        terminalScrollbarHover: r.muted,
 
-        // Status, from the palette's own reds and yellows rather than a rotation.
+        // Status, from the palette's own reds and yellows rather than a hue
+        // rotation of the accent. The bright ANSI pair is the text, which is
+        // what it is for.
         error: t.ansi.red[0],
+        errorForeground: legible([r.base, r.surface, errSurface], t.ansi.red[1], r.text),
+        errorSurface: errSurface,
         warning: t.ansi.yellow[0],
+        warningForeground: legible([r.base, r.surface, warnSurface], t.ansi.yellow[1], r.text),
+        warningSurface: warnSurface,
       },
     },
     null,
@@ -474,6 +541,7 @@ export function t3Theme(t: Theme): string {
   ) + "\n";
 }
 
+/** HSL lightness of a hex, 0-100 — the axis Discord's colour ramps are built on. */
 export function lightness(hex: string): number {
   const ch = [0, 1, 2].map((i) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255);
   return ((Math.max(...ch) + Math.min(...ch)) / 2) * 100;

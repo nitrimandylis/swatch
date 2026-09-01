@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool, lightness, rampAt, legcordCss, midnightVars, hsl, glanceTheme, t3Theme } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool, lightness, rampAt, legcordCss, midnightVars, hsl, glanceTheme, t3Theme, contrast, relLuminance, legible } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -759,36 +759,95 @@ test("--help wins anywhere, and unknown options are rejected", () => {
   expect(bad.stderr).not.toContain('no theme "--bogus"');
 });
 
-test("t3code publishes two seeds plus the roles T3 Code derives badly", () => {
-  const t = parseTheme("test", "/tmp", GOOD);
-  const f = JSON.parse(t3Theme(t));
+/**
+ * Palettes chosen to break the mapping, not to look nice. Every one is
+ * synthetic: the point is that no real theme ever needs a hand-written
+ * exception, so the test covers the shapes that would otherwise force one.
+ */
+const T3_CASES: [string, Record<string, string>][] = [
+  // A comfortable dark palette: nothing should be corrected.
+  ["plain", { base: "#0d0a1e", surface: "#171233", overlay: "#272049", text: "#ece9f7", muted: "#8d86ac", accent: "#ff1f6b", deep: "#c4144f", on_fill: "#0d0a1e" }],
+  // `muted` is a code-comment grey, unreadable as UI chrome (1.4:1 on surface).
+  ["comment-grey", { base: "#2e3440", surface: "#3b4252", overlay: "#434c5e", text: "#d8dee9", muted: "#4c566a", accent: "#88c0d0", deep: "#5e81ac", on_fill: "#2e3440" }],
+  // A light overlay: an overlay-based accent tint would miss AA here.
+  ["light-overlay", { base: "#05090a", surface: "#241c1b", overlay: "#6b514a", text: "#c0c3c9", muted: "#8d7b75", accent: "#ff5b02", deep: "#8f2a10", on_fill: "#05090a" }],
+  // A near-white accent, so `on_fill` has to be the dark end.
+  ["pale-accent", { base: "#0c0a16", surface: "#17122a", overlay: "#2a2142", text: "#e9e6f5", muted: "#8b83a8", accent: "#fcee0a", deep: "#b8890a", on_fill: "#0c0a16" }],
+  // Light variant, to prove the mapping never assumes a dark canvas.
+  ["light", { base: "#fdfdfb", surface: "#f0efe9", overlay: "#dcdad0", text: "#1c1b17", muted: "#6b6a62", accent: "#a8341f", deep: "#7a2414", on_fill: "#fdfdfb" }],
+];
 
-  // Seeds, not a full palette: the client grows the rest from these two.
-  expect(f.canvas).toBe(t.roles.base);
-  expect(f.accent).toBe(t.roles.accent);
-  expect(f.appearance).toBe("dark");
-  expect(f.name).toBe(t.meta.name);
+function t3Case(roles: Record<string, string>, variant = "dark") {
+  const body = Object.entries(roles).map(([k, v]) => `${k} = "${v}"`).join("\n");
+  return parseTheme("case", "/tmp", GOOD.replace(/variant = "dark"/, `variant = "${variant}"`)
+    .replace(/base = "#000000"[\s\S]*?on_fill = "#000000"/, body));
+}
 
-  // The status colours have to be the palette's own, not a hue rotation.
-  expect(f.colors.error).toBe(t.ansi.red[0]);
-  expect(f.colors.warning).toBe(t.ansi.yellow[0]);
-  expect(f.colors.terminalBackground).toBe(t.roles.base);
-  expect(f.colors.terminalCursor).toBe(t.roles.accent);
+test("t3code publishes every role, from the palette, legibly", () => {
+  for (const [label, roles] of T3_CASES) {
+    const variant = label === "light" ? "light" : "dark";
+    const t = t3Case(roles, variant);
+    const f = JSON.parse(t3Theme(t));
+    const c = f.colors as Record<string, string>;
+    const why = (s: string) => `${label}: ${s}`;
 
-  // Every neutral must be published, not derived. T3 Code grows unlisted roles
-  // from the accent over the canvas, which repaints the whole app in the accent
-  // hue — the bug this surface shipped with.
-  const NEUTRAL = [
-    "surface", "surfaceRaised", "surfaceOverlay", "border", "input",
-    "secondary", "muted", "chrome", "toolbar", "toolbarControl",
-    "sidebar", "sidebarBorder", "sidebarRowHover", "codeBackground",
-    "messageSurface", "messageAction",
-  ];
-  for (const k of NEUTRAL)
-    expect([t.roles.base, t.roles.surface, t.roles.overlay]).toContain(f.colors[k]);
+    expect(f.appearance).toBe(variant);
+    expect(f.canvas).toBe(t.roles.base);
+    expect(f.accent).toBe(t.roles.accent);
 
-  // Every value must satisfy the client's colour pattern, or the whole file is
-  // dropped with nothing but a line in the server log.
-  for (const v of [f.canvas, f.accent, ...Object.values(f.colors) as string[]])
-    expect(v).toMatch(/^#[0-9a-f]{6}$/);
+    // An unparseable value is dropped client-side with only a server log line,
+    // so a typo in a role name or a bad hex is invisible without this.
+    for (const v of [f.canvas, f.accent, ...Object.values(c)])
+      expect(v, why(v)).toMatch(/^#[0-9a-f]{6}$/);
+
+    // Nothing may be left for T3 Code to derive from the accent over the canvas.
+    // That derivation is what repainted a whole indigo palette maroon.
+    for (const k of ["canvas", "surface", "surfaceRaised", "surfaceOverlay", "sidebar",
+      "codeBackground", "messageSurface", "accentSurface", "terminalBackground",
+      "border", "input", "toolbarControl", "sidebarRowSelected", "errorSurface"])
+      expect(c[k], why(`missing ${k}`)).toBeString();
+
+    // Every foreground has to clear WCAG AA on the background it actually sits
+    // on. This is the whole correctness claim: it holds per palette, with no
+    // per-theme values anywhere in t3Theme.
+    const PAIRS: [string, string][] = [
+      ["text", "canvas"], ["text", "surface"], ["text", "surfaceRaised"],
+      ["text", "surfaceOverlay"], ["text", "input"],
+      ["messageActionForeground", "messageAction"],
+      ["sidebarForeground", "sidebar"], ["sidebarForeground", "sidebarRowHover"], ["codeForeground", "codeBackground"],
+      ["messageForeground", "messageSurface"],
+      ["accentSurfaceForeground", "accentSurface"],
+      ["terminalForeground", "terminalBackground"],
+      ["textMuted", "canvas"], ["textMuted", "surface"],
+      ["sidebarMutedForeground", "sidebar"],
+      ["accentForeground", "accent"],
+      ["errorForeground", "errorSurface"], ["warningForeground", "warningSurface"],
+    ];
+    for (const [fg, bg] of PAIRS)
+      expect(contrast(c[fg]!, c[bg]!), why(`${fg} on ${bg}`)).toBeGreaterThanOrEqual(4.5);
+
+    // The elevation ladder must actually rise, or popovers read as flat.
+    const rise = [c.canvas!, c.surface!, c.surfaceRaised!, c.surfaceOverlay!].map(relLuminance);
+    for (let i = 1; i < rise.length; i++)
+      expect(rise[i], why(`tier ${i} flat`)).not.toBe(rise[i - 1]);
+
+    // Selection has to be visible against the rows around it.
+    expect(contrast(c.sidebarRowSelected!, c.sidebar!), why("selection")).toBeGreaterThan(1.05);
+  }
 });
+
+test("legible corrects only what needs it", () => {
+  // Already readable: returned untouched, so a well-built palette ships as authored.
+  expect(legible(["#000000"], "#888888", "#ffffff")).toBe("#888888");
+  // Unreadable: walked toward the target only as far as AA needs, not to the end.
+  const fixed = legible(["#3b4252", "#2e3440"], "#4c566a", "#d8dee9");
+  expect(fixed).not.toBe("#4c566a");
+  expect(fixed).not.toBe("#d8dee9");
+  expect(contrast(fixed, "#3b4252")).toBeGreaterThanOrEqual(4.5);
+});
+
+test("contrast matches the WCAG anchors", () => {
+  expect(contrast("#000000", "#ffffff")).toBeCloseTo(21, 5);
+  expect(contrast("#777777", "#777777")).toBeCloseTo(1, 5);
+});
+

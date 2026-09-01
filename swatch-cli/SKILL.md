@@ -81,11 +81,14 @@ with the most saturated pixel and call it done.
 - **T3 Code needs no restart and no `t3` CLI.** swatch writes `~/.t3/userdata/themes/swatch.json`
   and sets `defaultTheme` / `defaultThemeSetAt` in `~/.t3/userdata/settings.json`; the server watches
   both and pushes the change to every connected client. The file is two seed colours (`canvas`,
-  `accent`) plus **every neutral role spelled out**. Do not trim it back to seeds: T3 Code derives
-  unlisted roles by tinting the canvas with the accent at 20%, so a hot accent on a dark canvas
-  turns every surface, sidebar row, toolbar pill and inline code chip that hue (Spider-Verse's
-  magenta over indigo came out maroon). The accent family is still derived, which is correct.
-  No font or ANSI slots exist.
+  `accent`) plus **every role T3 Code knows, spelled out**. Do not trim it back to seeds: unlisted
+  roles are derived by tinting the canvas with the accent at 20%, so a hot accent on a dark canvas
+  turns every surface, sidebar row, toolbar pill and code chip that hue (Spider-Verse's magenta over
+  indigo came out maroon). `t3Theme` has no per-theme values and must not grow any — two rules cover
+  the awkward palettes: `dim` nudges `muted` toward `text` when a scheme uses a code-comment grey
+  (nord's is 1.4:1 on its own surface), and `panel` pulls `overlay` back toward `surface` when it is
+  light enough to fail AA behind body text (mclaren). Both no-op on a palette that already works.
+  All eleven themes clear WCAG AA on every text pair. No font or ANSI slots exist.
   The theme id is the filename, so it stays `swatch` across recolours; the timestamp is what makes
   the same name re-apply. Skipped when `~/.t3/userdata` does not exist.
 - **glance needs no restart either, but its stylesheet needs a tab refresh.** swatch writes
