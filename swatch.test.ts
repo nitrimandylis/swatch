@@ -775,6 +775,17 @@ test("t3code publishes two seeds plus the roles T3 Code derives badly", () => {
   expect(f.colors.terminalBackground).toBe(t.roles.base);
   expect(f.colors.terminalCursor).toBe(t.roles.accent);
 
+  // Every neutral must be published, not derived. T3 Code grows unlisted roles
+  // from the accent over the canvas, which repaints the whole app in the accent
+  // hue — the bug this surface shipped with.
+  const NEUTRAL = [
+    "surface", "surfaceRaised", "surfaceOverlay", "border", "input",
+    "secondary", "muted", "chrome", "toolbar", "toolbarControl",
+    "sidebar", "sidebarBorder", "sidebarRowHover", "codeBackground",
+  ];
+  for (const k of NEUTRAL)
+    expect([t.roles.base, t.roles.surface, t.roles.overlay]).toContain(f.colors[k]);
+
   // Every value must satisfy the client's colour pattern, or the whole file is
   // dropped with nothing but a line in the server log.
   for (const v of [f.canvas, f.accent, ...Object.values(f.colors) as string[]])

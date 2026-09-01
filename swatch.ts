@@ -375,32 +375,80 @@ export function glanceTheme(t: Theme): string {
 
 /** HSL lightness of a hex, 0-100 — the axis Discord's colour ramps are built on. */
 /**
- * T3 Code's environment theme file. Two seed colours plus the roles the client
- * would otherwise derive badly: it grows the whole palette out of `canvas` x
- * `accent` with the same generator its guided editor uses, so anything not
- * listed here still lands in the right family. The nine explicit roles are the
- * ones a derived value gets visibly wrong — terminal chrome and the two status
- * colours, which must be the palette's own reds and yellows.
+ * T3 Code's environment theme file. `canvas` and `accent` are seeds: the client
+ * grows a whole palette from them with its guided editor's generator, and
+ * `colors` is layered on top. So anything not listed here still lands somewhere
+ * coherent, and a role a newer build adds is filled in rather than missing.
+ *
+ * What is listed is **every neutral**, because the generator tints them. Its
+ * tint input is the accent at 20% over the canvas, which for a hot accent on a
+ * dark canvas is a muddy version of the accent hue — Spider-Verse's magenta over
+ * indigo derived a maroon, and every surface, sidebar row, toolbar pill and
+ * inline code chip came out that colour instead of the palette's indigo. Seeds
+ * alone are only safe when the accent is close to the palette's own surfaces.
+ * The accent family (accentSurface, focus, update, the message bubble) is still
+ * derived, because there it is the point.
  *
  * No fonts and no ANSI: T3 Code has no slots for either.
- * ponytail: upgrade path if the sidebars read off — add `sidebar`,
- * `surfaceRaised`, `surfaceOverlay` from surface/overlay.
  */
 export function t3Theme(t: Theme): string {
+  const r = t.roles;
   return JSON.stringify(
     {
       name: t.meta.name,
       appearance: t.meta.variant,
-      canvas: t.roles.base,
-      accent: t.roles.accent,
+      canvas: r.base,
+      accent: r.accent,
       colors: {
-        accentForeground: t.roles.on_fill,
-        text: t.roles.text,
-        textMuted: t.roles.muted,
-        terminalBackground: t.roles.base,
-        terminalForeground: t.roles.text,
-        terminalCursor: t.roles.accent,
-        terminalSelection: t.roles.overlay,
+        // Text.
+        text: r.text,
+        textMuted: r.muted,
+        mutedForeground: r.muted,
+        secondaryLabel: r.muted,
+        placeholder: r.muted,
+        iconMuted: r.muted,
+        accentForeground: r.on_fill,
+
+        // The three surface tiers, over the canvas.
+        surface: r.surface,
+        surfaceRaised: r.overlay,
+        surfaceOverlay: r.overlay,
+        border: r.overlay,
+        input: r.overlay,
+        secondary: r.surface,
+        secondaryForeground: r.text,
+        muted: r.surface,
+
+        // Chrome. The pills in the title bar are toolbar controls.
+        chrome: r.base,
+        toolbar: r.base,
+        toolbarForeground: r.text,
+        toolbarBorder: r.overlay,
+        toolbarControl: r.surface,
+        toolbarControlForeground: r.text,
+        toolbarControlHover: r.overlay,
+
+        // Sidebar. Selection stays in the accent family; hover and active do not.
+        sidebar: r.surface,
+        sidebarForeground: r.text,
+        sidebarMutedForeground: r.muted,
+        sidebarBorder: r.overlay,
+        sidebarControlSurface: r.overlay,
+        sidebarRowHover: r.overlay,
+        sidebarRowActive: r.overlay,
+        sidebarRowSelected: r.deep,
+
+        // Inline code and fenced blocks, the densest thing on screen.
+        codeBackground: r.surface,
+        codeForeground: r.text,
+
+        // Terminal.
+        terminalBackground: r.base,
+        terminalForeground: r.text,
+        terminalCursor: r.accent,
+        terminalSelection: r.overlay,
+
+        // Status, from the palette's own reds and yellows rather than a rotation.
         error: t.ansi.red[0],
         warning: t.ansi.yellow[0],
       },

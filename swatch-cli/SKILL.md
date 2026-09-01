@@ -81,7 +81,11 @@ with the most saturated pixel and call it done.
 - **T3 Code needs no restart and no `t3` CLI.** swatch writes `~/.t3/userdata/themes/swatch.json`
   and sets `defaultTheme` / `defaultThemeSetAt` in `~/.t3/userdata/settings.json`; the server watches
   both and pushes the change to every connected client. The file is two seed colours (`canvas`,
-  `accent`) plus nine explicit roles — T3 Code derives the rest itself, and has no font or ANSI slots.
+  `accent`) plus **every neutral role spelled out**. Do not trim it back to seeds: T3 Code derives
+  unlisted roles by tinting the canvas with the accent at 20%, so a hot accent on a dark canvas
+  turns every surface, sidebar row, toolbar pill and inline code chip that hue (Spider-Verse's
+  magenta over indigo came out maroon). The accent family is still derived, which is correct.
+  No font or ANSI slots exist.
   The theme id is the filename, so it stays `swatch` across recolours; the timestamp is what makes
   the same name re-apply. Skipped when `~/.t3/userdata` does not exist.
 - **glance needs no restart either, but its stylesheet needs a tab refresh.** swatch writes

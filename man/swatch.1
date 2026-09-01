@@ -203,8 +203,10 @@ refresh the tab to pick up the stylesheet. The surface is skipped when
 T3 Code follows a palette its own machine publishes: swatch writes
 \fI~/.t3/userdata/themes/swatch.json\fR and then sets \fBdefaultTheme\fR and
 \fBdefaultThemeSetAt\fR in \fI~/.t3/userdata/settings.json\fR. The file carries
-two seed colours plus the nine roles T3 Code would otherwise derive badly, and
-the app grows the rest of the palette from the seeds; there are no font or ANSI
+two seed colours plus every neutral role, and the app grows anything unlisted
+from the seeds. The neutrals have to be published: the generator tints them with
+the accent over the canvas, so a hot accent on a dark canvas repaints every
+surface, sidebar row and code block in the accent hue. There are no font or ANSI
 slots to write. Both files are watched, so nothing restarts, and the timestamp
 is what makes a recolour under the same name reach clients that already applied
 it. The surface is skipped when \fI~/.t3/userdata\fR is absent.
