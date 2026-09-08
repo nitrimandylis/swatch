@@ -64,6 +64,7 @@ ever reaches a session-check splash, and the second cannot speak to origin.
 |---|---|
 | ghostty, btop, glow, zed, vscode, yazi | pointer flip |
 | t3code | pointer flip in JSON, plus a set-at stamp so a recolour re-applies |
+| vicinae | pointer flip in JSONC, one TOML theme named for both appearances |
 | fzf, git, web | generated file, static include, opt-in |
 | borders, cava, lazygit, zen | marker injection |
 | cider | key edit, no theme file |

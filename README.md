@@ -53,6 +53,7 @@ Batman Jazz
   ✓ zed
   ✓ vscode (restart VS Code to pick it up)
   ✓ t3code
+  ✓ vicinae
   ✓ cava
   ✓ lazygit
   ✓ git
@@ -72,7 +73,7 @@ app supports, not on preference.
 
 | | mechanism | what it actually does |
 |---|---|---|
-| 01 | **pointer flip** | swatch writes a theme file next to the config and swaps one line to name it: ghostty, btop, glow, zed, vscode, yazi. T3 Code is the same shape in JSON: a published palette in `~/.t3/userdata/themes/`, named by `defaultTheme`, with `defaultThemeSetAt` stamped so a recolour under the same name still reaches clients that already applied it |
+| 01 | **pointer flip** | swatch writes a theme file next to the config and swaps one line to name it: ghostty, btop, glow, zed, vscode, yazi. T3 Code is the same shape in JSON: a published palette in `~/.t3/userdata/themes/`, named by `defaultTheme`, with `defaultThemeSetAt` stamped so a recolour under the same name still reaches clients that already applied it. Vicinae too: a TOML theme in `~/.local/share/vicinae/themes/`, named for both appearances in its `settings.json`, both watched |
 | 02 | **marker injection** | app has no theme-file support, so swatch owns the block between `swatch:start` and `swatch:end` and leaves the rest alone: sketchybar, borders, cava, lazygit, zen |
 | 03 | **generated file, static include** | the app has no theme mechanism but does read a file swatch can own outright: fzf's `--color` block, git's `[color]` sections, and the web — Notion, Notion Calendar, GitHub, YouTube, Wikipedia, DuckDuckGo, init.Habits and the Vercel dashboard have no config at all, so swatch themes each one through the CSS variables it already builds its UI from and lets Zen load them. All three are opt-in — swatch writes nothing unless a shell rc sources `~/.config/fzf/colors.sh`, a gitconfig includes `swatch.gitconfig`, or Zen's `userContent.css` imports `swatch-web.css` |
 | 04 | **client-mod stylesheet** | the app stores its theme behind an account, so the only readable surface is the client mod's own stylesheet: Discord, through Legcord's `quickCss.css`. Opt-in by markers, because that file is one you write in too. Discord builds all 867 of its theme tokens from nine colour ramps on `:root`, so swatch overrides the ramps and not one semantic name, and adds the variables [refact0r's midnight](https://github.com/refact0r/midnight-discord) documents for anyone running it |

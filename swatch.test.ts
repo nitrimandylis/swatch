@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool, lightness, rampAt, legcordCss, midnightVars, hsl, glanceTheme, t3Theme, contrast, relLuminance, legible } from "./swatch";
+import { parseTheme, isHex, loadTheme, listThemes, replaceLine, ghosttyTheme, btopTheme, inject, argb, tintColor, highlightColor, fzfColors, gitColors, sketchybarColors, render, replaceInBlock, mix, cavaGradient, zenDefaultProfile, ciderConfig, ciderCss, rgbTriplet, readBmp, extractRoles, scaffoldPalette, imageFormat, isDynamicWallpaper, pool, resolvePick, themeReadme, addToPool, lightness, rampAt, legcordCss, midnightVars, hsl, glanceTheme, t3Theme, vicinaeTheme, contrast, relLuminance, legible } from "./swatch";
 
 // Templates ship with the CLI, so they sit next to this file. Themes do not, so
 // point the loader at a fixture instead of somebody's personal collection.
@@ -833,6 +833,25 @@ test("t3code publishes every role, from the palette, legibly", () => {
 
     // Selection has to be visible against the rows around it.
     expect(contrast(c.sidebarRowSelected!, c.sidebar!), why("selection")).toBeGreaterThan(1.05);
+  }
+});
+
+test("vicinae theme parses and reads on every tier", () => {
+  for (const [label, roles] of T3_CASES) {
+    const t = t3Case(roles, label === "light" ? "light" : "dark");
+    const f = Bun.TOML.parse(vicinaeTheme(t)) as any;
+    const why = (s: string) => `${label}: ${s}`;
+    expect(f.meta.inherits).toBe(`vicinae-${t.meta.variant}`);
+    const core = f.colors.core, text = f.colors.text, sel = f.colors.list.item.selection;
+    for (const [fg, bg] of [
+      [core.foreground, core.background], [core.foreground, core.secondary_background],
+      [text.muted, core.background], [text.muted, core.secondary_background],
+      [sel.foreground, sel.background], [sel.secondary_foreground, sel.secondary_background],
+      [text.selection.foreground, text.selection.background],
+      [core.accent_foreground, core.accent],
+    ] as [string, string][])
+      expect(contrast(fg, bg), why(`${fg} on ${bg}`)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(sel.background, core.background), why("selection")).toBeGreaterThan(1.05);
   }
 });
 

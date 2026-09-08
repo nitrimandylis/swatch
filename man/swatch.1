@@ -215,6 +215,16 @@ are no font or ANSI slots to write. Both files are watched, so nothing restarts,
 is what makes a recolour under the same name reach clients that already applied
 it. The surface is skipped when \fI~/.t3/userdata\fR is absent.
 .PP
+Vicinae reads a user theme from \fI~/.local/share/vicinae/themes/swatch.toml\fR,
+which swatch writes whole with every slot its template lists, then names it
+under both \fBtheme.dark\fR and \fBtheme.light\fR in
+\fI~/.config/vicinae/settings.json\fR, since the palette does not follow the
+system appearance switch. That file is JSONC: swatch keeps the comment header
+and writes the body with the same three-space indent vicinae uses, so a visit
+to its settings window does not make \fBstatus\fR report drift. Both files are
+watched, so nothing restarts. The surface is skipped when
+\fI~/.config/vicinae\fR is absent.
+.PP
 On macOS 26 and later swatch also tints every app icon with the palette accent,
 by writing the icon appearance keys in NSGlobalDomain and then asking SkyLight
 to apply them, which is what makes the Dock re-render. No icon file is touched,
