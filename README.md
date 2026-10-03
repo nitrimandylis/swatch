@@ -9,11 +9,11 @@
 
 <div align="center">
 
-### `ONE PALETTE // TWENTY SURFACES // ONE COMMAND`
+### `ONE PALETTE // TWENTY-TWO SURFACES // ONE COMMAND`
 
 *a wallpaper picks the colors, a TOML file locks them, and every app on the machine agrees*
 
-![surfaces](https://img.shields.io/badge/surfaces-20-e85a9c?style=flat-square&labelColor=111111)
+![surfaces](https://img.shields.io/badge/surfaces-22-e85a9c?style=flat-square&labelColor=111111)
 ![runtime](https://img.shields.io/badge/runtime-bun-4e749e?style=flat-square&labelColor=111111)
 ![deps](https://img.shields.io/badge/runtime_deps-0-4e749e?style=flat-square&labelColor=111111)
 ![license](https://img.shields.io/badge/license-MIT-e85a9c?style=flat-square&labelColor=111111)
@@ -25,8 +25,8 @@
 
 ## 🎨 What is this
 
-Theming a desktop by hand means the same hex code lives in twenty files, and
-changing your mind means finding all twenty. Swatch replaces that with one
+Theming a desktop by hand means the same hex code lives in twenty-two files, and
+changing your mind means finding all twenty-two. Swatch replaces that with one
 `palette.toml` per theme and a compiled CLI that writes every surface from it:
 terminal, editors, status bar, file manager, browser, wallpaper.
 
@@ -68,7 +68,7 @@ Batman Jazz
 
 ## 🔧 The surfaces
 
-Eight mechanisms cover everything. Which one a surface gets depends on what the
+Nine mechanisms cover everything. Which one a surface gets depends on what the
 app supports, not on preference.
 
 | | mechanism | what it actually does |
@@ -90,6 +90,7 @@ app supports, not on preference.
 | 03 | `swatch status` | the same code path with writes disabled, tells you which files have drifted. defaults to the theme actually applied |
 | 03a | `--json` | on `list` and `status`, for scripts. `active` is how you ask which theme is up, since swatch stores no state |
 | 04 | `swatch new <name> <img>...` | samples the first wallpaper into a palette scaffold and marks the accent TODO |
+| 05 | `swatch add <theme> <img>...` | copies more wallpapers into an existing theme. `-` reads the paths from stdin |
 
 Swatch refuses to apply any palette containing the string `TODO`.
 
@@ -118,6 +119,8 @@ git config --global include.path '~/.config/git/swatch.gitconfig'
 # re-injects on save, so this one needs no restart:
 #   /* swatch:start */
 #   /* swatch:end */
+# Quick CSS must also be switched on, i.e. "quickCss": true in
+# ~/Library/Application Support/legcord/storage/settings.json
 ```
 
 ```bash
@@ -206,7 +209,7 @@ flowchart LR
     R --> T[templates/]
     T --> F[theme files]
     R --> M[marker blocks]
-    F --> A[21 surfaces]
+    F --> A[22 surfaces]
     M --> A
     R --> D[theme README.md]
 ```

@@ -8,7 +8,9 @@ swatch \- switch the whole desktop to a theme
 Applies a palette to every themed surface on the machine: terminal, editors,
 status bar, file manager, browser and wallpaper. A theme is a directory holding
 a \fIpalette.toml\fR and a \fIwallpapers/\fR pool, kept under
-\fI~/.config/swatch/themes/\fR.
+\fI~/.config/swatch/themes/\fR, or wherever
+.B SWATCH_THEMES
+points.
 .PP
 Swatch writes theme files and one pointer line per surface; it never rewrites a
 whole config. Where an app has no theme-file mechanism, swatch replaces only the
@@ -167,7 +169,8 @@ presence would mean "theme me". Swatch writes
 \fI~/.config/git/swatch.gitconfig\fR only when a gitconfig already includes it,
 \fIswatch\-web.css\fR in Zen's chrome directory only when
 \fIuserContent.css\fR imports it, and Legcord's
-\fIquickCss.css\fR only when that file already carries the swatch markers:
+\fIquickCss.css\fR only when that file already carries the swatch markers and Legcord's
+\fIstorage/settings.json\fR has \fBquickCss\fR set to true:
 .IP
 .EX
 mkdir \-p ~/.config/fzf
@@ -177,6 +180,8 @@ git config \-\-global include.path '~/.config/git/swatch.gitconfig'
 # in ~/Library/Application Support/legcord/quickCss.css:
 #   /* swatch:start */
 #   /* swatch:end */
+# and "quickCss": true in
+# ~/Library/Application Support/legcord/storage/settings.json
 .EE
 .PP
 The fzf colours reach a shell the next time it starts, not the one that ran
