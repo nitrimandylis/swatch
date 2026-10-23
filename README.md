@@ -19,6 +19,8 @@
 ![license](https://img.shields.io/badge/license-MIT-e85a9c?style=flat-square&labelColor=111111)
 ![hexes](https://img.shields.io/badge/hexes_typed_twice-0-4e749e?style=flat-square&labelColor=111111)
 
+![swatch](.github/assets/swatch.gif)
+
 </div>
 
 ---

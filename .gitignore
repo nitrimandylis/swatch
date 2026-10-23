@@ -11,3 +11,6 @@ SHOWCASE.md
 # fixtures under test/themes/ still get tracked.
 /themes/
 /docs/
+
+# Built by tapes/fixture.ts; the generator is the artifact.
+tapes/fixtures/
