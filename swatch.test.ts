@@ -116,6 +116,7 @@ test("tintColor is sRGB floats at six decimals", () => {
 
 test("highlightColor keeps the name macOS prints under the swatch", () => {
   expect(highlightColor("#ff1f6b", "Spider Verse")).toBe("1.000000 0.121569 0.419608 Spider Verse");
+  expect(highlightColor("#ffffff", "Creation")).toBe("0.847059 0.847059 0.862745 Graphite");
 });
 
 test("fzf leaves the background to the terminal", () => {

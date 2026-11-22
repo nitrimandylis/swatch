@@ -284,7 +284,13 @@ export const tintColor = (hex: string) => `${srgb(hex)} 1.000000`;
  * the label System Settings prints under the swatch, not a lookup key: any name
  * is accepted and the colour comes from the floats.
  */
-export const highlightColor = (hex: string, name: string) => `${srgb(hex)} ${name}`;
+export function highlightColor(hex: string, name: string): string {
+  // A grey or white accent (Creation's is #ffffff) would paint the selection
+  // the same colour as the text on it, so fall back to macOS's own Graphite.
+  const grey = hex.slice(1, 3) === hex.slice(3, 5) && hex.slice(3, 5) === hex.slice(5, 7);
+  if (grey) return "0.847059 0.847059 0.862745 Graphite";
+  return `${srgb(hex)} ${name}`;
+}
 
 /** 0xAARRGGBB — what borders and sketchybar want. */
 export const argb = (hex: string, alpha = "ff") => `0x${alpha}${bare(hex)}`;

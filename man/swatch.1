@@ -240,7 +240,8 @@ puts it back. Earlier releases have no such setting and the surface is skipped.
 The system highlight colour behind selected text is set the same way, through
 \fBAppleHighlightColor\fR, which takes an arbitrary colour \(em unlike
 \fBAppleAccentColor\fR, an eight-value enum with no custom slot, which swatch
-leaves alone. Running apps keep the old colour until they are relaunched.
+leaves alone. A grey or white accent falls back to Graphite, since it would
+match the selected text. Running apps keep the old colour until they are relaunched.
 .PP
 Dynamic wallpapers are HEIC files carrying \fIapple_desktop:solar\fR or
 \fI:h24\fR, often named \fI.jpg\fR.
